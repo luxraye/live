@@ -6,6 +6,7 @@
     "dev:demo": "pnpm --filter demo-hub run dev",
     "dev:scyther": "pnpm --filter scyther-mobile run dev",
     "dev:rubric": "pnpm --filter rubric run dev",
+    "dev:aegis": "pnpm --filter @bloodchain/aegis run dev",
     "dev:api": "pnpm --filter api-server run dev",
     "dev:fabric": "pnpm --filter bloodchain-fabric-node run dev",
     "build": "pnpm -r --if-present run build",
