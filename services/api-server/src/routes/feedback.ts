@@ -1,9 +1,9 @@
 import { Router, type IRouter } from 'express';
-import { getAuth } from '@clerk/express';
+import { getRequestAuth } from '../lib/auth';
 import { pool } from '@workspace/db';
 const router: IRouter = Router();
 router.post('/', async (req, res) => {
-  const userId = getAuth(req).userId;
+  const userId = getRequestAuth(req).userId;
   const { sessionId, responses, appVersion, platform } = req.body as Record<string, unknown>;
   if (!responses || typeof responses !== 'object') return res.status(400).json({ error: { code: 'INVALID_BODY', message: 'responses is required.' } });
   const result = await pool.query(
@@ -13,7 +13,7 @@ router.post('/', async (req, res) => {
   return res.status(201).json({ id: result.rows[0].id });
 });
 router.get('/', async (req, res) => {
-  const userId = getAuth(req).userId;
+  const userId = getRequestAuth(req).userId;
   if (!userId) return res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Sign in is required.' } });
   const result = await pool.query('SELECT * FROM feedback_responses ORDER BY created_at DESC LIMIT 100');
   return res.json(result.rows);

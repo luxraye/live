@@ -1,5 +1,5 @@
 import { Router, type IRouter } from 'express';
-import { getAuth } from '@clerk/express';
+import { getRequestAuth } from '../lib/auth';
 import { pool } from '@workspace/db';
 
 const router: IRouter = Router();
@@ -17,7 +17,7 @@ router.get('/manifests', async (req, res) => {
 
 // POST /api/transit/manifests — create a new dispatch crate
 router.post('/manifests', async (req, res) => {
-  const userId = getAuth(req).userId;
+  const userId = getRequestAuth(req).userId;
   const { originFacility, destinationFacility, driverName, unitBarcodes, coolerBoxId } = req.body as Record<string, unknown>;
 
   if (!originFacility || !destinationFacility) {

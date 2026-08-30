@@ -1,9 +1,9 @@
 import { Router, type IRouter } from 'express';
-import { getAuth } from '@clerk/express';
+import { getRequestAuth } from '../lib/auth';
 import { pool } from '@workspace/db';
 const router: IRouter = Router();
 router.get('/overview', async (req, res) => {
-  const userId = getAuth(req).userId;
+  const userId = getRequestAuth(req).userId;
   if (!userId) return res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Sign in is required.' } });
   const [donors, pendingDocs, activeCentres, openRequests, totalResponses, articles, feedback] = await Promise.all([
     pool.query('SELECT COUNT(*) FROM donor_profiles'),

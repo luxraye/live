@@ -1,12 +1,12 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { getAuth } from "@clerk/express";
+import { getRequestAuth } from "../lib/auth";
 import { pool } from "@workspace/db";
 import { anchorDonationToFabric } from "../lib/fabric";
 
 const router: IRouter = Router();
 
 function requireAdmin(req: Request, res: Response): string | null {
-  const userId = getAuth(req).userId;
+  const userId = getRequestAuth(req).userId;
   if (!userId) {
     res.status(401).json({ error: { code: "UNAUTHORIZED", message: "Sign in is required." } });
     return null;

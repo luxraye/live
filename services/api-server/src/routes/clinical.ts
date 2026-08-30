@@ -1,5 +1,5 @@
 import { Router, type IRouter } from 'express';
-import { getAuth } from '@clerk/express';
+import { getRequestAuth } from '../lib/auth';
 import { pool } from '@workspace/db';
 
 const router: IRouter = Router();
@@ -21,7 +21,7 @@ router.get('/orders', async (req, res) => {
 
 // POST /api/clinical/orders — doctor creates blood request
 router.post('/orders', async (req, res) => {
-  const userId = getAuth(req).userId;
+  const userId = getRequestAuth(req).userId;
   const { hospitalName, wardRoom, patientIdentifier, bloodType, component, unitsRequested, urgency, indication } = req.body as Record<string, unknown>;
 
   if (!hospitalName || !wardRoom || !patientIdentifier || !bloodType) {
@@ -42,7 +42,7 @@ router.post('/orders', async (req, res) => {
 
 // POST /api/clinical/transfusions — bedside dual scan verification & sign-off
 router.post('/transfusions', async (req, res) => {
-  const userId = getAuth(req).userId ?? 'clinician-demo';
+  const userId = getRequestAuth(req).userId ?? 'clinician-demo';
   const { orderId, unitBarcode, patientIdentifier, startedAt, completedAt, hasReaction, reactionDetails } = req.body as Record<string, unknown>;
 
   if (!unitBarcode || !patientIdentifier) {

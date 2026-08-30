@@ -1,5 +1,5 @@
 import { Router, type IRouter } from 'express';
-import { getAuth } from '@clerk/express';
+import { getRequestAuth } from '../lib/auth';
 import { pool } from '@workspace/db';
 
 const router: IRouter = Router();
@@ -22,7 +22,7 @@ router.get('/inventory', async (req, res) => {
 
 // POST /api/lab/intake — receive and barcode a new whole blood collection bag
 router.post('/intake', async (req, res) => {
-  const userId = getAuth(req).userId;
+  const userId = getRequestAuth(req).userId;
   const { donorHash, bloodType, donationTxId, volumeMl, vaultLocation } = req.body as Record<string, unknown>;
 
   if (!donorHash || !bloodType) {
@@ -44,7 +44,7 @@ router.post('/intake', async (req, res) => {
 
 // PUT /api/lab/tests/:id — record serology & viral screening results
 router.put('/tests/:id', async (req, res) => {
-  const userId = getAuth(req).userId;
+  const userId = getRequestAuth(req).userId;
   const { isReactive, viralMarkers, vaultLocation } = req.body as Record<string, unknown>;
 
   const reactive = Boolean(isReactive);
@@ -69,7 +69,7 @@ router.put('/tests/:id', async (req, res) => {
 
 // POST /api/lab/fractionate/:id — split 1 Whole Blood bag into PRBC, FFP, Platelets
 router.post('/fractionate/:id', async (req, res) => {
-  const userId = getAuth(req).userId;
+  const userId = getRequestAuth(req).userId;
   const parentUnit = await pool.query('SELECT * FROM blood_units WHERE id = $1', [req.params.id]);
 
   if (!parentUnit.rows[0]) {

@@ -1,11 +1,11 @@
-import { Router, type IRouter } from "express";
-import { getAuth } from "@clerk/express";
+import { Router, type IRouter, type Request } from "express";
+import { getRequestAuth } from "../lib/auth";
 import { pool } from "@workspace/db";
 
 const router: IRouter = Router();
 
-function authenticatedUserId(req: Parameters<typeof getAuth>[0]) {
-  return getAuth(req).userId;
+function authenticatedUserId(req: Request) {
+  return getRequestAuth(req).userId;
 }
 
 router.get("/me", async (req, res) => {

@@ -30,7 +30,19 @@ app.use(
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(clerkMiddleware({ publishableKey: process.env.CLERK_PUBLISHABLE_KEY }));
+
+if (process.env.CLERK_PUBLISHABLE_KEY) {
+  app.use(clerkMiddleware({ publishableKey: process.env.CLERK_PUBLISHABLE_KEY }));
+} else {
+  // Local development fallback — permits unauthenticated or bearer mock requests
+  app.use((req, _res, next) => {
+    const bearer = req.headers.authorization?.replace(/^Bearer\s+/i, '');
+    (req as any).auth = {
+      userId: bearer || 'dev-pilot-user',
+    };
+    next();
+  });
+}
 
 app.use("/api", router);
 

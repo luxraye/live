@@ -1,5 +1,5 @@
 import { Router, type IRouter } from 'express';
-import { getAuth } from '@clerk/express';
+import { getRequestAuth } from '../lib/auth';
 import { pool } from '@workspace/db';
 const router: IRouter = Router();
 router.get('/requests', async (req, res) => {
@@ -15,7 +15,7 @@ router.get('/requests', async (req, res) => {
   return res.json(result.rows);
 });
 router.post('/requests/:id/respond', async (req, res) => {
-  const userId = getAuth(req).userId;
+  const userId = getRequestAuth(req).userId;
   if (!userId) return res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Sign in is required.' } });
   const requestId = Number(req.params.id);
   await pool.query(`INSERT INTO request_responses (request_id, clerk_user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [requestId, userId]);
