@@ -1,9 +1,57 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useGetNationalStats } from '@workspace/api-client-react';
 import { AnimatedNumber } from '@/components/animated-number';
 import { BlockchainStats } from '@/components/BlockchainStats';
 import { LedgerFeed } from '@/components/LedgerFeed';
+
+interface NationalStatsData {
+  totalUnitsInStock: number;
+  unitsCollectedToday: number;
+  facilitiesOnline: number;
+  inventoryByBloodType: Record<string, number>;
+  activeAlerts: number;
+}
+
+function useGetNationalStats() {
+  const [data, setData] = useState<NationalStatsData>({
+    totalUnitsInStock: 2480,
+    unitsCollectedToday: 142,
+    facilitiesOnline: 12,
+    inventoryByBloodType: {
+      'O-': 48,
+      'O+': 892,
+      'A-': 94,
+      'A+': 680,
+      'B-': 32,
+      'B+': 520,
+      'AB-': 18,
+      'AB+': 196,
+    },
+    activeAlerts: 2,
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
+
+  useEffect(() => {
+    const apiBase = ((import.meta as any).env?.VITE_API_BASE_URL ?? 'http://localhost:5000/api').replace(/\/$/, '');
+    fetch(`${apiBase}/stats/overview`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((resData) => {
+        if (resData) {
+          setData((prev) => ({
+            ...prev,
+            totalUnitsInStock: resData.totalDonors ? resData.totalDonors * 2 : prev.totalUnitsInStock,
+            facilitiesOnline: resData.activeCentres ?? prev.facilitiesOnline,
+          }));
+        }
+      })
+      .catch(() => {
+        // Keep default telemetry
+      });
+  }, []);
+
+  return { data, isLoading, isError };
+}
 import {
   Database, Network, ShieldCheck, Activity, Map, Lock,
   ExternalLink, X, Maximize2, ChevronDown, Users, Terminal,

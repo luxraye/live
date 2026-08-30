@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "bloodchain-monorepo",
   "version": "1.0.0",
   "private": true,
@@ -14,5 +14,16 @@
   "devDependencies": {
     "typescript": "^5.4.0",
     "prettier": "^3.2.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "pkcs11js",
+      "protobufjs",
+      "bufferutil",
+      "utf-8-validate",
+      "core-js",
+      "browser-tabs-lock"
+    ]
   }
 }

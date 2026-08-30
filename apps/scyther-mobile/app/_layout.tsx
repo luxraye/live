@@ -13,20 +13,16 @@ import {
 } from '@expo-google-fonts/inter';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { setBaseUrl } from '@workspace/api-client-react';
-import { setAuthTokenGetter } from '@workspace/api-client-react';
 import { ClerkProvider, ClerkLoaded, useAuth } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
-setBaseUrl(process.env.EXPO_PUBLIC_API_BASE_URL ?? '');
 
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
-  const { getToken, isSignedIn } = useAuth();
-  useEffect(() => { setAuthTokenGetter(() => getToken()); }, [getToken]);
+  const { isSignedIn } = useAuth();
   return (
     <Stack screenOptions={{ headerBackTitle: 'Back', headerShown: false }}>
       <Stack.Protected guard={Boolean(isSignedIn)}>

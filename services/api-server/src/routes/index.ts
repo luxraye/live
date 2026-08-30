@@ -8,6 +8,9 @@ import networkRouter from './network';
 import feedbackRouter from './feedback';
 import statsRouter from './stats';
 import adminRouter from './admin';
+import clinicalRouter from './clinical';
+import transitRouter from './transit';
+import labRouter from './lab';
 
 const router: IRouter = Router();
 
@@ -21,5 +24,9 @@ router.use('/network', networkRouter);
 router.use('/feedback', feedbackRouter);
 router.use('/stats', statsRouter);
 router.use('/admin', adminRouter);
+router.use('/clinical', clinicalRouter);
+router.use('/transit', transitRouter);
+router.use('/lab', labRouter);
 
 export default router;
+

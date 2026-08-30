@@ -1,4 +1,13 @@
-﻿packages:
+packages:
   - 'apps/*'
   - 'services/*'
   - 'packages/*'
+allowBuilds:
+  browser-tabs-lock: true
+  bufferutil: true
+  core-js: true
+  esbuild: true
+  pkcs11js: true
+  protobufjs: true
+  utf-8-validate: true
+
