@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "Scyther",
+    "slug": "scyther-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "scyther",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#060912"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.bloodchain.scyther",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Scyther uses your location to show nearby donation centres.",
+        "NSPhotoLibraryUsageDescription": "Scyther uses your photos only when you choose a document for verification.",
+        "NSCameraUsageDescription": "Scyther uses your camera only when you capture a verification document."
+      }
+    },
+    "android": {
+      "package": "com.bloodchain.scyther",
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION", "CAMERA", "READ_MEDIA_IMAGES"]
+    },
+    "web": {
+      "favicon": "./assets/images/icon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-web-browser",
+      "expo-location",
+      ["expo-image-picker", { "photosPermission": "Allow Scyther to access a document you select for verification.", "cameraPermission": "Allow Scyther to capture a verification document." }]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

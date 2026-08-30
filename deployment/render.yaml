@@ -1,0 +1,82 @@
+﻿services:
+  # ─── 1. CORE API BACKEND ──────────────────────────────────────────────────
+  - type: web
+    name: bloodchain-api
+    runtime: node
+    plan: starter
+    rootDir: services/api-server
+    buildCommand: npm install && npm run build
+    startCommand: node dist/index.js
+    envVars:
+      - key: PORT
+        value: "5000"
+      - key: NODE_ENV
+        value: "production"
+      - key: DATABASE_URL
+        sync: false # Set via Render dashboard (PostgreSQL)
+      - key: CLERK_SECRET_KEY
+        sync: false # Set via Render dashboard
+      - key: CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: FABRIC_NODE_URL
+        value: "https://bloodchain-fabric-node.onrender.com"
+      - key: FABRIC_GATEWAY_SECRET
+        sync: false
+
+  # ─── 2. HYPERLEDGER FABRIC GATEWAY SERVICE ───────────────────────────────
+  - type: web
+    name: bloodchain-fabric-node
+    runtime: node
+    plan: starter
+    rootDir: services/fabric-node
+    buildCommand: npm install && npm run build
+    startCommand: node dist/index.js
+    envVars:
+      - key: PORT
+        value: "3001"
+      - key: NODE_ENV
+        value: "production"
+      - key: FABRIC_MOCK_MODE
+        value: "true"
+      - key: ALLOWED_ORIGINS
+        value: "https://bloodchain.life,https://www.bloodchain.life,https://rubric.bloodchain.life"
+      - key: FABRIC_GATEWAY_SECRET
+        generateValue: true
+      - key: FABRIC_PEER_ENDPOINT
+        value: "localhost:7051"
+      - key: FABRIC_MSP_ID
+        value: "Org1MSP"
+      - key: FABRIC_PEER_HOST_ALIAS
+        value: "peer0.org1.example.com"
+
+  # ─── 3. RUBRIC SITUATION ROOM (OPERATOR COMMAND) ──────────────────────────
+  - type: web
+    name: bloodchain-rubric
+    runtime: static
+    rootDir: apps/rubric
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: "https://bloodchain-api.onrender.com"
+      - key: VITE_CLERK_PUBLISHABLE_KEY
+        sync: false
+
+  # ─── 4. DEMO MARKETING HUB & PUBLIC LEDGER ────────────────────────────────
+  - type: web
+    name: bloodchain-demo
+    runtime: static
+    rootDir: apps/demo-hub
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist/public
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_FABRIC_NODE_URL
+        value: "https://bloodchain-fabric-node.onrender.com"

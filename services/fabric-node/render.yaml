@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: bloodchain-fabric-node
+    runtime: node
+    buildCommand: npm ci && npm run build
+    startCommand: node dist/index.js
+    envVars:
+      - key: FABRIC_MOCK_MODE
+        value: "true"
+      - key: PORT
+        value: "3001"
+      - key: ALLOWED_ORIGINS
+        value: "https://bloodchain.life,https://www.bloodchain.life"
+      - key: FABRIC_GATEWAY_SECRET
+        generateValue: true
+      - key: FABRIC_PEER_ENDPOINT
+        value: "localhost:7051"
+      - key: FABRIC_MSP_ID
+        value: "Org1MSP"
+      - key: FABRIC_PEER_HOST_ALIAS
+        value: "peer0.org1.example.com"

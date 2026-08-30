@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables — NEVER commit secrets
+.env
+.env.local
+.dev.vars
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Logs
+logs/
+*.log
+.pm2/
+
+# Go
+chaincode/bloodchain/vendor/
+
+# Backup files
+*.backup
+*.bak
+*.tar.gz
+*.zip
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
