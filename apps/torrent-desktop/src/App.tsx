@@ -342,6 +342,100 @@ const CUSTODY_EVENTS = [
   },
 ];
 
+export interface OperatorProfileData {
+  id: string;
+  name: string;
+  shortName: string;
+  initials: string;
+  title: string;
+  idCode: string;
+  station: string;
+  shift: string;
+  primaryCorridor: string;
+  defaultRoute: 'Gaborone → Molepolole' | 'Francistown → Serowe';
+  complianceScore: string;
+  vehicle: string;
+  phone: string;
+  avatarColor: string;
+}
+
+const OPERATOR_PROFILES: Record<string, OperatorProfileData> = {
+  amantle: {
+    id: 'amantle',
+    name: 'Amantle Kgosi',
+    shortName: 'Amantle',
+    initials: 'AK',
+    title: 'Senior Cold-Chain Dispatcher',
+    idCode: 'TR-104',
+    station: 'Gaborone Central Operations Room (NBTS HQ)',
+    shift: '06:00 – 18:00 CAT (Active)',
+    primaryCorridor: 'A12 Highway (Gaborone ➔ Molepolole)',
+    defaultRoute: 'Gaborone → Molepolole',
+    complianceScore: '99.8% within 2°C – 8°C',
+    vehicle: 'Toyota Hilux 4x4 (B 492 BWB)',
+    phone: '+267 72 341 890',
+    avatarColor: '#0e8490',
+  },
+  kagiso: {
+    id: 'kagiso',
+    name: 'Kagiso Moloi',
+    shortName: 'Kagiso',
+    initials: 'KM',
+    title: 'Northern Corridor Fleet Lead',
+    idCode: 'TR-202',
+    station: 'Nyangabgwe Referral Logistics Hub (Francistown)',
+    shift: '07:00 – 19:00 CAT (Active)',
+    primaryCorridor: 'A1 North Corridor (Francistown ➔ Serowe)',
+    defaultRoute: 'Francistown → Serowe',
+    complianceScore: '99.4% within 2°C – 8°C',
+    vehicle: 'Land Cruiser Cold Box (B 819 BWA)',
+    phone: '+267 71 892 104',
+    avatarColor: '#166534',
+  },
+  thabo: {
+    id: 'thabo',
+    name: 'Thabo Dintwa',
+    shortName: 'Thabo',
+    initials: 'TD',
+    title: 'Delta Remote Hub & Air-Lift Courier',
+    idCode: 'TR-305',
+    station: 'Maun General & Okavango Delta Transit Post',
+    shift: '05:30 – 17:30 CAT (Active)',
+    primaryCorridor: 'A3 Highway & Delta Air Corridor (Maun ➔ Gumare)',
+    defaultRoute: 'Gaborone → Molepolole',
+    complianceScore: '98.9% within 2°C – 8°C',
+    vehicle: 'Cessna 208 Caravan / Hilux 4x4 (B 104 BWC)',
+    phone: '+267 75 410 992',
+    avatarColor: '#854d0e',
+  },
+};
+
+function resolveOperatorProfile(operatorRole: string): OperatorProfileData {
+  const lower = operatorRole.toLowerCase();
+  if (lower.includes('kagiso')) return OPERATOR_PROFILES.kagiso;
+  if (lower.includes('thabo')) return OPERATOR_PROFILES.thabo;
+  if (lower.includes('amantle')) return OPERATOR_PROFILES.amantle;
+
+  const cleanName = operatorRole.replace(/^Dispatcher\s+/i, '').split('(')[0].trim() || 'Logistics Operator';
+  const initials = cleanName.split(' ').map((n) => n[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || 'OP';
+  return {
+    id: 'custom',
+    name: cleanName,
+    shortName: cleanName.split(' ')[0] || 'Operator',
+    initials,
+    title: 'Certified Cold-Chain Officer',
+    idCode: 'TR-900',
+    station: 'National Emergency Dispatch Network',
+    shift: 'Live Roster (Active)',
+    primaryCorridor: 'Trans-Kalahari & A1 Corridors',
+    defaultRoute: 'Gaborone → Molepolole',
+    complianceScore: '99.5% within 2°C – 8°C',
+    vehicle: 'Emergency Transit Cruiser (B 500 BWD)',
+    phone: '+267 395 2444',
+    avatarColor: '#0e8490',
+  };
+}
+
 import Landing from '@/components/Landing';
 
 function Home() {
@@ -355,9 +449,10 @@ function Home() {
 }
 
 function HomeContent({ operatorRole, onExit }: { operatorRole: string; onExit: () => void }) {
+  const profile = useMemo(() => resolveOperatorProfile(operatorRole), [operatorRole]);
   const [activeTab, setActiveTab] = useState<NavSection>('overview');
   const [presentation, setPresentation] = useState(false);
-  const [route, setRoute] = useState<'Gaborone → Molepolole' | 'Francistown → Serowe'>('Gaborone → Molepolole');
+  const [route, setRoute] = useState<'Gaborone → Molepolole' | 'Francistown → Serowe'>(profile.defaultRoute);
   const [thermalState, setThermalState] = useState<'safe' | 'watch' | 'hold'>('safe');
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackSent, setFeedbackSent] = useState(false);
@@ -547,7 +642,7 @@ function HomeContent({ operatorRole, onExit }: { operatorRole: string; onExit: (
                 data-testid="nav-user"
                 onClick={() => setUserModalOpen(true)}
               >
-                <UserRound size={16} /> Amantle · Control
+                <UserRound size={16} /> {profile.shortName} · {profile.title.split(' ')[0]}
               </button>
             </div>
           </aside>
@@ -650,7 +745,7 @@ function HomeContent({ operatorRole, onExit }: { operatorRole: string; onExit: (
                   <div className="tt-route-footer">
                     <div className="tt-route-progress">
                       <div className="tt-route-progress-top">
-                        <span>Waypoint 03 of 05 · driver Amantle K.</span>
+                        <span>Waypoint 03 of 05 · courier {profile.name}</span>
                         <strong>{routeIsPrimary ? '68%' : '31%'}</strong>
                       </div>
                       <div className="tt-progress-line"><span style={{ width: routeIsPrimary ? '68%' : '31%' }} /></div>
@@ -1139,21 +1234,22 @@ function HomeContent({ operatorRole, onExit }: { operatorRole: string; onExit: (
             </div>
             <div className="tt-dialog-body">
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
-                <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#0e8490', color: '#ffffff', display: 'grid', placeItems: 'center', fontSize: 18, fontWeight: 700 }}>
-                  AK
+                <div style={{ width: 48, height: 48, borderRadius: '50%', background: profile.avatarColor, color: '#ffffff', display: 'grid', placeItems: 'center', fontSize: 18, fontWeight: 700 }}>
+                  {profile.initials}
                 </div>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Amantle Kgosi</h4>
-                  <p style={{ margin: 0, fontSize: 12, color: '#72918b' }}>Senior Cold-Chain Dispatcher · ID #TR-104</p>
+                  <h4 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>{profile.name}</h4>
+                  <p style={{ margin: 0, fontSize: 12, color: '#72918b' }}>{profile.title} · ID #{profile.idCode}</p>
                 </div>
               </div>
 
               <div style={{ display: 'grid', gap: 8, fontSize: 13, background: presentation ? '#162f39' : '#f0f6f2', padding: 14, borderRadius: 8 }}>
-                <div><strong>Station:</strong> Gaborone Central Operations Room</div>
-                <div><strong>Current Shift:</strong> 06:00 – 18:00 CAT (Active)</div>
-                <div><strong>Primary Corridor:</strong> A12 Highway (Gaborone ➔ Molepolole)</div>
-                <div><strong>Cold Compliance Score:</strong> 99.8% within 2°C – 8°C</div>
-                <div><strong>Active Vehicle:</strong> Toyota Hilux 4x4 (B 492 BWB)</div>
+                <div><strong>Station:</strong> {profile.station}</div>
+                <div><strong>Current Shift:</strong> {profile.shift}</div>
+                <div><strong>Primary Corridor:</strong> {profile.primaryCorridor}</div>
+                <div><strong>Cold Compliance Score:</strong> {profile.complianceScore}</div>
+                <div><strong>Active Vehicle:</strong> {profile.vehicle}</div>
+                <div><strong>Direct Comms:</strong> {profile.phone}</div>
               </div>
 
               <div className="tt-dialog-footer">
