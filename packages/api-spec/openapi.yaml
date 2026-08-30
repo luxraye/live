@@ -1,0 +1,304 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: dashboard
+    description: Operational dashboard
+  - name: units
+    description: Blood unit intake and processing
+  - name: vault
+    description: Cold vault inventory
+  - name: feedback
+    description: Pilot workflow feedback
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Get operational dashboard summary
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+  /units:
+    get:
+      operationId: getUnits
+      tags: [units]
+      summary: List blood units
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [all, pending, verified, quarantine, processed, disposed]
+            default: all
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Blood units
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Unit"
+    post:
+      operationId: createUnit
+      tags: [units]
+      summary: Receive a whole blood donation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UnitInput"
+      responses:
+        "201":
+          description: Received unit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unit"
+  /units/{id}/screen:
+    post:
+      operationId: screenUnit
+      tags: [units]
+      summary: Submit serology screening results
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SerologyInput"
+      responses:
+        "200":
+          description: Screened unit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unit"
+  /units/{id}/fractionate:
+    post:
+      operationId: fractionateUnit
+      tags: [units]
+      summary: Convert a verified whole blood unit into components
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FractionateInput"
+      responses:
+        "201":
+          description: Created blood components
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Component"
+  /vault:
+    get:
+      operationId: getVault
+      tags: [vault]
+      summary: Get cold vault matrix and expiry watchlist
+      responses:
+        "200":
+          description: Vault slots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VaultSlot"
+  /feedback:
+    post:
+      operationId: submitFeedback
+      tags: [feedback]
+      summary: Submit workflow pilot feedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FeedbackInput"
+      responses:
+        "201":
+          description: Feedback recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Feedback"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    DashboardSummary:
+      type: object
+      required: [receivedToday, processedToday, quarantineCount, expiringSoonCount, verifiedRate, throughput]
+      properties:
+        receivedToday:
+          type: number
+        processedToday:
+          type: number
+        quarantineCount:
+          type: number
+        expiringSoonCount:
+          type: number
+        verifiedRate:
+          type: number
+        throughput:
+          type: object
+          required: [current, target, unit]
+          properties:
+            current: { type: number }
+            target: { type: number }
+            unit: { type: string }
+    Unit:
+      type: object
+      required: [id, donorCode, collectionSite, collectedAt, volumeMl, bloodGroup, status, screening, createdAt]
+      properties:
+        id: { type: string }
+        donorCode: { type: string }
+        collectionSite: { type: string }
+        collectedAt: { type: string }
+        volumeMl: { type: number }
+        bloodGroup: { type: ["string", "null"] }
+        status:
+          type: string
+          enum: [pending, verified, quarantine, processed, disposed]
+        screening:
+          type: object
+          required: [aboForward, aboReverse, rhd, hiv, hbsag, hcv, vdrl, gate]
+          properties:
+            aboForward: { type: string }
+            aboReverse: { type: string }
+            rhd: { type: string }
+            hiv: { type: string }
+            hbsag: { type: string }
+            hcv: { type: string }
+            vdrl: { type: string }
+            gate:
+              type: string
+              enum: [awaiting, passed, quarantine]
+        createdAt: { type: string }
+    UnitInput:
+      type: object
+      required: [donorCode, collectionSite, collectedAt, volumeMl]
+      properties:
+        donorCode: { type: string, minLength: 3 }
+        collectionSite: { type: string, minLength: 2 }
+        collectedAt: { type: string }
+        volumeMl: { type: number, minimum: 1 }
+    SerologyInput:
+      type: object
+      required: [aboForward, aboReverse, rhd, hiv, hbsag, hcv, vdrl]
+      properties:
+        aboForward: { type: string }
+        aboReverse: { type: string }
+        rhd: { type: string }
+        hiv: { type: string, enum: [non-reactive, reactive] }
+        hbsag: { type: string, enum: [non-reactive, reactive] }
+        hcv: { type: string, enum: [non-reactive, reactive] }
+        vdrl: { type: string, enum: [non-reactive, reactive] }
+    FractionateInput:
+      type: object
+      properties:
+        operator: { type: string }
+        shelf: { type: string }
+    Component:
+      type: object
+      required: [id, parentUnitId, type, volumeMl, storage, expiresAt, shelf, status]
+      properties:
+        id: { type: string }
+        parentUnitId: { type: string }
+        type:
+          type: string
+          enum: [PRBC, FFP, PLT]
+        volumeMl: { type: number }
+        storage: { type: string }
+        expiresAt: { type: string }
+        shelf: { type: string }
+        status:
+          type: string
+          enum: [available, expiring, dispatched, expired]
+    VaultSlot:
+      type: object
+      required: [shelf, zone, temperature, component, status]
+      properties:
+        shelf: { type: string }
+        zone: { type: string }
+        temperature: { type: string }
+        component:
+          type: ["object", "null"]
+          properties:
+            id: { type: string }
+            type: { type: string }
+            bloodGroup: { type: string }
+            expiresAt: { type: string }
+            hoursRemaining: { type: number }
+            parentUnitId: { type: string }
+        status:
+          type: string
+          enum: [occupied, empty, expiring, quarantine]
+    FeedbackInput:
+      type: object
+      required: [platform, rating, paperComparison]
+      properties:
+        platform: { type: string, enum: [crucible-lab] }
+        rating: { type: number, minimum: 1, maximum: 5 }
+        paperComparison: { type: string, enum: [much-slower, slower, same, faster, much-faster] }
+        note: { type: string }
+    Feedback:
+      allOf:
+        - $ref: "#/components/schemas/FeedbackInput"
+        - type: object
+          required: [id, submittedAt]
+          properties:
+            id: { type: string }
+            submittedAt: { type: string }
+

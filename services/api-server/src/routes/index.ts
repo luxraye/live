@@ -27,6 +27,7 @@ router.use('/admin', adminRouter);
 router.use('/clinical', clinicalRouter);
 router.use('/transit', transitRouter);
 router.use('/lab', labRouter);
+router.use(labRouter);
 
 export default router;
 

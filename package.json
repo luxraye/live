@@ -9,6 +9,7 @@
     "dev:aegis": "pnpm --filter @bloodchain/aegis run dev",
     "dev:torrent": "pnpm --filter @bloodchain/torrent run dev",
     "dev:torrent-desktop": "pnpm --filter @bloodchain/torrent-desktop run dev",
+    "dev:crucible": "pnpm --filter @workspace/crucible-lab run dev",
     "dev:api": "pnpm --filter api-server run dev",
     "dev:fabric": "pnpm --filter bloodchain-fabric-node run dev",
     "build": "pnpm -r --if-present run build",
