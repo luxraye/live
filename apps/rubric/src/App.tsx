@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useAuth, useUser, SignIn } from '@clerk/react';
 import {
   Activity, AlertTriangle, ArrowUpRight, Building2, Check, CheckCircle2,
-  Clock3, FileCheck2, FileText, LayoutDashboard, Loader2, Menu, MessageSquareQuote,
+  Clock3, FileCheck2, FileText, LayoutDashboard, Link2, Loader2, Menu, MessageSquareQuote,
   Network, Plus, Radio, RefreshCw, Search, Send, Settings2, ShieldCheck, Siren,
   TrendingUp, UserCheck, Users, X,
 } from 'lucide-react';

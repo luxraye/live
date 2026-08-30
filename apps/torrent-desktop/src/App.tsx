@@ -24,6 +24,7 @@ import {
   Hospital,
   Layers,
   LayoutDashboard,
+  Link2,
   Lock,
   MapPin,
   Maximize2,
@@ -345,6 +346,15 @@ import Landing from '@/components/Landing';
 
 function Home() {
   const [operatorRole, setOperatorRole] = useState<string | null>(null);
+
+  if (!operatorRole) {
+    return <Landing onLogin={(role) => setOperatorRole(role)} />;
+  }
+
+  return <HomeContent operatorRole={operatorRole} onExit={() => setOperatorRole(null)} />;
+}
+
+function HomeContent({ operatorRole, onExit }: { operatorRole: string; onExit: () => void }) {
   const [activeTab, setActiveTab] = useState<NavSection>('overview');
   const [presentation, setPresentation] = useState(false);
   const [route, setRoute] = useState<'Gaborone → Molepolole' | 'Francistown → Serowe'>('Gaborone → Molepolole');
@@ -357,10 +367,6 @@ function Home() {
   const [dispatchFilter, setDispatchFilter] = useState<'all' | 'STAT' | 'In Transit' | 'Packing'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [toast, setToast] = useState('');
-
-  if (!operatorRole) {
-    return <Landing onLogin={(role) => setOperatorRole(role)} />;
-  }
 
   const routeIsPrimary = route === 'Gaborone → Molepolole';
   const thermal = {
@@ -563,7 +569,7 @@ function Home() {
               <button
                 className="tt-ghost-btn"
                 style={{ fontSize: 11, color: '#ef7459', borderColor: 'rgba(239,116,89,0.3)' }}
-                onClick={() => setOperatorRole(null)}
+                onClick={onExit}
               >
                 Exit Pilot
               </button>
