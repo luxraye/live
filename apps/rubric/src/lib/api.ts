@@ -1,4 +1,4 @@
-﻿/**
+/**
  * api.ts — Authenticated fetch wrapper for the Bloodchain API server.
  *
  * Every request to a protected route attaches the Clerk session token
@@ -6,7 +6,7 @@
  * don't require a token — pass token = null for those.
  */
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/$/, '');
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 

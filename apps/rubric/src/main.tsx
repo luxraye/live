@@ -25,16 +25,24 @@ if (!clerkPk) {
   );
 }
 
+const content = (
+  <QueryClientProvider client={queryClient}>
+    <App />
+  </QueryClientProvider>
+);
+
 createRoot(document.getElementById('root')!, {
   onCaughtError: (error, errorInfo) => {
     console.error(error, errorInfo.componentStack);
   },
 }).render(
   <ErrorBoundary>
-    <ClerkProvider publishableKey={clerkPk ?? ''}>
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
-    </ClerkProvider>
+    {clerkPk ? (
+      <ClerkProvider publishableKey={clerkPk}>
+        {content}
+      </ClerkProvider>
+    ) : (
+      content
+    )}
   </ErrorBoundary>,
 );

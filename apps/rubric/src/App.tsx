@@ -107,15 +107,34 @@ function SkeletonRows({ cols = 4 }: { cols?: number }) {
   );
 }
 
-function AuthGuard({ children }: { children: ReactNode }) {
+function useSafeAuth() {
   const hasKey = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
-  const { isSignedIn, isLoaded } = useAuth();
-
   if (!hasKey) {
-    // If no Clerk key is provided yet, allow previewing the app directly
-    return <>{children}</>;
+    return {
+      isSignedIn: true,
+      isLoaded: true,
+      signOut: async () => {},
+    };
   }
+  return useAuth();
+}
 
+function useSafeUser() {
+  const hasKey = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
+  if (!hasKey) {
+    return {
+      user: {
+        firstName: 'Command',
+        lastName: 'Operator',
+        emailAddresses: [{ emailAddress: 'operator@bloodchain.life' }],
+      },
+    };
+  }
+  return useUser();
+}
+
+function ClerkAuthGate({ children }: { children: ReactNode }) {
+  const { isSignedIn, isLoaded } = useAuth();
   if (!isLoaded) {
     return (
       <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', background: '#060912' }}>
@@ -144,6 +163,16 @@ function AuthGuard({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+function AuthGuard({ children }: { children: ReactNode }) {
+  const hasKey = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
+
+  if (!hasKey) {
+    return <>{children}</>;
+  }
+
+  return <ClerkAuthGate>{children}</ClerkAuthGate>;
+}
+
 function App() {
   return (
     <TooltipProvider>
@@ -160,8 +189,8 @@ function App() {
 }
 
 function Shell() {
-  const { signOut } = useAuth();
-  const { user } = useUser();
+  const { signOut } = useSafeAuth();
+  const { user } = useSafeUser();
   const [location] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; kind: 'success' | 'error' } | null>(null);

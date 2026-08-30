@@ -1,4 +1,4 @@
-﻿/**
+/**
  * hooks.ts — React Query hooks for every Rubric data domain.
  *
  * All write mutations optimistically update the cache, then invalidate on
@@ -82,8 +82,16 @@ export type ShortageRequest = {
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
 function useToken() {
-  const { getToken } = useAuth();
-  return () => getToken();
+  const hasClerk = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
+  if (hasClerk) {
+    try {
+      const { getToken } = useAuth();
+      return () => getToken();
+    } catch {
+      return async () => 'dev-operator-demo';
+    }
+  }
+  return async () => 'dev-operator-demo';
 }
 
 // ─── Stats / Overview ─────────────────────────────────────────────────────────
