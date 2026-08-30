@@ -125,6 +125,7 @@ export const MOCK_ORDERS = [
     order_number: 'ORD-2026-1001',
     hospital_name: 'Princess Marina Hospital',
     ward_room: 'ICU Bed 4',
+    doctor_clerk_user_id: 'dr_kgosi',
     patient_identifier: 'MRN-882194',
     blood_type: 'O-',
     component: 'prbc',
@@ -152,11 +153,39 @@ export const MOCK_UNITS = [
   },
 ];
 
+export const MOCK_DOCS = [
+  {
+    id: 1,
+    clerk_user_id: 'user_donor_001',
+    first_name: 'Kabo',
+    last_name: 'Tau',
+    document_type: 'national_omang',
+    document_url: 'https://images.unsplash.com/photo-1544717305-2782549b5136',
+    status: 'pending',
+    verification_level: 1,
+    created_at: new Date(Date.now() - 14400000).toISOString(),
+  },
+  {
+    id: 2,
+    clerk_user_id: 'user_donor_002',
+    first_name: 'Lesego',
+    last_name: 'Moloi',
+    document_type: 'donor_card',
+    document_url: 'https://images.unsplash.com/photo-1544717305-2782549b5136',
+    status: 'pending',
+    verification_level: 1,
+    created_at: new Date(Date.now() - 28800000).toISOString(),
+  },
+];
+
 export class MockPool {
   private feedbackSubmissions: any[] = [];
   private dynamicOrders: any[] = [...MOCK_ORDERS];
+  private dynamicRequests: any[] = [...MOCK_REQUESTS];
   private dynamicCentres: any[] = [...MOCK_CENTRES];
+  private dynamicArticles: any[] = [...MOCK_ARTICLES];
   private dynamicUnits: any[] = [...MOCK_UNITS];
+  private dynamicDocs: any[] = [...MOCK_DOCS];
 
   async query(sql: string, params: any[] = []): Promise<{ rows: any[] }> {
     const s = sql.toLowerCase().trim();
@@ -169,39 +198,117 @@ export class MockPool {
       }
       return { rows: this.dynamicCentres };
     }
+    if (s.includes('insert into donation_centres')) {
+      const newCentre = {
+        id: this.dynamicCentres.length + 1,
+        name: params[0],
+        kind: params[1] || 'clinic',
+        address: params[2] || '',
+        district: params[3] || 'Gaborone',
+        latitude: params[4] || -24.65,
+        longitude: params[5] || 25.91,
+        phone: params[6] || '+267 362 0000',
+        is_open: true,
+        accepts_walk_ins: params[9] ?? true,
+        is_active: true,
+        distance_km: 2.5,
+      };
+      this.dynamicCentres.push(newCentre);
+      return { rows: [newCentre] };
+    }
 
     // Articles
     if (s.includes('from health_articles')) {
       if (s.includes('where slug = $1')) {
-        const found = MOCK_ARTICLES.find((a) => a.slug === params[0]);
+        const found = this.dynamicArticles.find((a) => a.slug === params[0]);
         return { rows: found ? [found] : [] };
       }
-      return { rows: MOCK_ARTICLES };
+      return { rows: this.dynamicArticles };
+    }
+    if (s.includes('insert into health_articles')) {
+      const newArticle = {
+        id: this.dynamicArticles.length + 1,
+        title: params[0],
+        slug: params[1],
+        body_markdown: params[2] || '',
+        topic: params[3] || 'general',
+        read_time_minutes: params[4] || 5,
+        icon_name: params[5] || 'heart',
+        published_at: new Date().toISOString(),
+      };
+      this.dynamicArticles.unshift(newArticle);
+      return { rows: [newArticle] };
     }
 
     // Network requests
     if (s.includes('from donation_requests')) {
-      return { rows: MOCK_REQUESTS };
+      if (s.includes('where id = $1')) {
+        const found = this.dynamicRequests.find((r) => r.id === Number(params[0]));
+        return { rows: found ? [found] : [] };
+      }
+      return { rows: this.dynamicRequests };
+    }
+    if (s.includes('insert into donation_requests')) {
+      const newReq = {
+        id: this.dynamicRequests.length + 1,
+        blood_type: params[0] || 'O-',
+        priority: params[1] || 'critical',
+        facility_name: params[2] || 'Princess Marina Hospital',
+        description: params[3] || 'Urgent blood units required',
+        district: params[4] || 'Gaborone',
+        latitude: params[5] || -24.6541,
+        longitude: params[6] || 25.9087,
+        response_count: 0,
+        is_open: true,
+        created_at: new Date().toISOString(),
+        age: 'Just now',
+      };
+      this.dynamicRequests.unshift(newReq);
+      return { rows: [newReq] };
+    }
+    if (s.includes('insert into request_responses')) {
+      const reqId = Number(params[0]);
+      const found = this.dynamicRequests.find((r) => r.id === reqId);
+      if (found) {
+        found.response_count = (found.response_count || 0) + 1;
+      }
+      return { rows: [{ id: 1 }] };
+    }
+
+    // Verification Queue
+    if (s.includes('from donor_documents')) {
+      return { rows: this.dynamicDocs.filter((d) => d.status === 'pending') };
+    }
+    if (s.includes('update donor_documents set status=')) {
+      const docId = Number(params[0]);
+      const status = params[1];
+      const found = this.dynamicDocs.find((d) => d.id === docId);
+      if (found) found.status = status;
+      return { rows: [{ updated: true }] };
     }
 
     // Stats Overview
     if (s.includes('count(*) from donor_profiles')) {
       return { rows: [{ count: 842 }] };
     }
-    if (s.includes('count(*) from donor_documents')) {
-      return { rows: [{ count: 6 }] };
+    if (s.includes("count(*) from donor_documents where status = 'pending'")) {
+      return { rows: [{ count: this.dynamicDocs.filter((d) => d.status === 'pending').length }] };
     }
     if (s.includes('count(*) from donation_centres')) {
       return { rows: [{ count: this.dynamicCentres.length }] };
     }
+    if (s.includes('count(*) from donation_requests')) {
+      return { rows: [{ count: this.dynamicRequests.filter((r) => r.is_open).length }] };
+    }
     if (s.includes('count(*) from health_articles')) {
-      return { rows: [{ count: MOCK_ARTICLES.length }] };
+      return { rows: [{ count: this.dynamicArticles.length }] };
     }
     if (s.includes('count(*) from feedback_responses')) {
       return { rows: [{ count: this.feedbackSubmissions.length + 42 }] };
     }
     if (s.includes('sum(response_count)')) {
-      return { rows: [{ sum: 128 }] };
+      const sum = this.dynamicRequests.reduce((acc, r) => acc + (r.response_count || 0), 0);
+      return { rows: [{ sum: sum + 120 }] };
     }
 
     // Clinical Orders
@@ -209,9 +316,10 @@ export class MockPool {
       return { rows: this.dynamicOrders };
     }
     if (s.includes('insert into clinical_orders')) {
+      const orderNumber = params[0] || 'ORD-2026-' + Math.floor(1000 + Math.random() * 9000);
       const newOrder = {
         id: this.dynamicOrders.length + 1,
-        order_number: params[0] || `ORD-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+        order_number: orderNumber,
         hospital_name: params[1],
         ward_room: params[2],
         doctor_clerk_user_id: params[3],
@@ -225,7 +333,31 @@ export class MockPool {
         created_at: new Date().toISOString(),
       };
       this.dynamicOrders.unshift(newOrder);
+
+      // Auto-propagate emergency STAT orders to donation requests feed
+      if (newOrder.urgency === 'stat_trauma' || newOrder.urgency === 'urgent_surgery') {
+        this.dynamicRequests.unshift({
+          id: this.dynamicRequests.length + 1,
+          blood_type: newOrder.blood_type,
+          priority: 'critical',
+          facility_name: newOrder.hospital_name,
+          description: 'STAT Emergency Order ' + orderNumber + ': ' + newOrder.units_requested + ' units of ' + newOrder.blood_type + ' urgently needed at ' + newOrder.ward_room + ' (' + (newOrder.indication || 'Critical Resuscitation') + ')',
+          district: 'Gaborone',
+          latitude: -24.6541,
+          longitude: 25.9087,
+          response_count: 0,
+          is_open: true,
+          created_at: new Date().toISOString(),
+          age: 'Just now',
+        });
+      }
+
       return { rows: [newOrder] };
+    }
+
+    // Transfusions
+    if (s.includes('insert into transfusion_logs')) {
+      return { rows: [{ id: 1, verified: true }] };
     }
 
     // Lab Inventory

@@ -173,22 +173,33 @@ function AuthGuard({ children }: { children: ReactNode }) {
   return <ClerkAuthGate>{children}</ClerkAuthGate>;
 }
 
+import Landing from '@/components/Landing';
+
 function App() {
+  const [pilotRole, setPilotRole] = useState<string | null>(null);
+
+  if (!pilotRole) {
+    return (
+      <TooltipProvider>
+        <Landing onLogin={(role) => setPilotRole(role)} />
+        <Toaster />
+      </TooltipProvider>
+    );
+  }
+
   return (
     <TooltipProvider>
       <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-        <AuthGuard>
-          <ErrorBoundary resetKey="shell">
-            <Shell />
-          </ErrorBoundary>
-        </AuthGuard>
+        <ErrorBoundary resetKey="shell">
+          <Shell pilotRole={pilotRole} onExitPilot={() => setPilotRole(null)} />
+        </ErrorBoundary>
       </WouterRouter>
       <Toaster />
     </TooltipProvider>
   );
 }
 
-function Shell() {
+function Shell({ pilotRole, onExitPilot }: { pilotRole: string; onExitPilot: () => void }) {
   const { signOut } = useSafeAuth();
   const { user } = useSafeUser();
   const [location] = useLocation();
@@ -208,9 +219,8 @@ function Shell() {
   const openReqs = stats?.openRequests ?? 0;
   const pageTitle = navItems.find(i => i.href === location)?.label ?? 'Overview';
   useEffect(() => { document.title = 'Rubric Command Centre - ' + pageTitle; }, [pageTitle]);
-  const rawName = user ? ((user.firstName ?? '') + ' ' + (user.lastName ?? '')).trim() : '';
-  const operatorName = rawName || user?.emailAddresses[0]?.emailAddress || 'Operator';
-  const operatorInitials = operatorName.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase() || 'OP';
+  const operatorName = pilotRole || (user ? ((user.firstName ?? '') + ' ' + (user.lastName ?? '')).trim() : 'National Controller');
+  const operatorInitials = operatorName.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase() || 'NC';
 
   return (
     <div className="app-shell">
@@ -219,26 +229,49 @@ function Shell() {
           <div className="brand-mark" aria-hidden="true" />
           <div><div className="brand-name">RUBRIC</div><div className="brand-sub">BLOODCHAIN / NATIONAL OPS</div></div>
         </div>
-        <nav className="side-nav" aria-label="Primary navigation">
-          <div className="side-label">Command modules</div>
-          {navItems.map(({ href, label, icon: NavIcon }) => (
-            <Link key={href} href={href} className={'nav-item ' + (location === href ? 'active' : '')} onClick={() => setMenuOpen(false)}>
-              <NavIcon className="nav-icon" />
-              <span className="nav-copy">{label}</span>
-              {label === 'Verification Queue' && pending > 0 && <span className="nav-badge">{pending.toString().padStart(2, '0')}</span>}
-              {label === 'Network Requests' && openReqs > 0 && <span className="nav-badge">{openReqs.toString().padStart(2, '0')}</span>}
-            </Link>
-          ))}
+        <div style={{ padding: '0 18px 12px' }}>
+          <a
+            href="https://bloodchain.life"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 10,
+              color: '#39d6e5',
+              textDecoration: 'none',
+              fontWeight: 700,
+            }}
+          >
+            <Link2 size={11} /> bloodchain.life
+          </a>
+        </div>
+        <nav className="nav">
+          {navItems.map(({ href, label, icon: NavIcon }) => {
+            const active = location === href;
+            const count = href === '/verification' ? pending : href === '/requests' ? openReqs : 0;
+            return (
+              <Link key={href} href={href} className={'nav-link ' + (active ? 'active' : '')} onClick={() => setMenuOpen(false)}>
+                <NavIcon size={16} />
+                <span>{label}</span>
+                {count > 0 && (
+                  <span className={'badge ' + (href === '/requests' ? 'badge-critical' : 'badge-warn')}>
+                    {count.toString().padStart(2, '0')}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
         </nav>
-        <div className="side-footer">
-          <div className="eyebrow">Active operator</div>
-          <div className="operator" style={{ marginTop: 10 }}>
-            <div className="avatar">{operatorInitials}</div>
-            <div>
-              <div className="operator-name">{operatorName}</div>
-              <div className="operator-role">MoH / NATIONAL OPS</div>
+        <div className="sidebar-foot">
+          <div className="user-badge">
+            <div className="avatar" aria-hidden="true">{operatorInitials}</div>
+            <div className="user-meta">
+              <div className="user-name" title={operatorName}>{operatorName}</div>
+              <div className="user-role">Sovereign Clearance</div>
             </div>
-            <button onClick={() => void signOut()} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} title="Sign out">
+            <button onClick={onExitPilot} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} title="Exit or Switch Pilot Role">
               <Settings2 size={14} color="#61798a" />
             </button>
           </div>
@@ -254,6 +287,13 @@ function Shell() {
             </div>
           </div>
           <div className="topbar-right">
+            <button
+              onClick={onExitPilot}
+              className="btn btn-sm"
+              style={{ fontSize: 11, padding: '4px 10px', background: 'rgba(239,116,130,0.15)', color: '#ef7482', border: '1px solid rgba(239,116,130,0.4)', cursor: 'pointer' }}
+            >
+              Exit Pilot
+            </button>
             <div className="live-system"><i className="pulse" /> Live system</div>
             <div className="utc" data-testid="text-utc-clock">UTC {now.toISOString().slice(11, 19)}</div>
           </div>

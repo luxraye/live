@@ -15,11 +15,32 @@ export interface DonorProfile {
   updated_at: string;
 }
 
+export const DEMO_DONOR_PROFILE: DonorProfile = {
+  id: 1,
+  clerk_user_id: 'user_donor_001',
+  first_name: 'Kabo',
+  last_name: 'Tau',
+  blood_type: 'O-',
+  district: 'Gaborone Central',
+  phone: '+267 72 100 240',
+  location_enabled: true,
+  verification_level: 2,
+  created_at: new Date(Date.now() - 90 * 86400000).toISOString(),
+  updated_at: new Date().toISOString(),
+};
+
 export function useDonorProfile() {
   const { apiFetch } = useApi();
   return useQuery<DonorProfile | null>({
     queryKey: ['donor-profile'],
-    queryFn: () => apiFetch<DonorProfile | null>('/donor/me'),
+    queryFn: async () => {
+      try {
+        const res = await apiFetch<DonorProfile | null>('/donor/me');
+        return res ?? DEMO_DONOR_PROFILE;
+      } catch {
+        return DEMO_DONOR_PROFILE;
+      }
+    },
     staleTime: 5 * 60 * 1000,
   });
 }

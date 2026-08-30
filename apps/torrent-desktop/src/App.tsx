@@ -341,7 +341,10 @@ const CUSTODY_EVENTS = [
   },
 ];
 
+import Landing from '@/components/Landing';
+
 function Home() {
+  const [operatorRole, setOperatorRole] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<NavSection>('overview');
   const [presentation, setPresentation] = useState(false);
   const [route, setRoute] = useState<'Gaborone → Molepolole' | 'Francistown → Serowe'>('Gaborone → Molepolole');
@@ -354,6 +357,10 @@ function Home() {
   const [dispatchFilter, setDispatchFilter] = useState<'all' | 'STAT' | 'In Transit' | 'Packing'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [toast, setToast] = useState('');
+
+  if (!operatorRole) {
+    return <Landing onLogin={(role) => setOperatorRole(role)} />;
+  }
 
   const routeIsPrimary = route === 'Gaborone → Molepolole';
   const thermal = {
@@ -476,6 +483,14 @@ function Home() {
               <div>
                 <div className="tt-brand-name">torrent transit</div>
                 <div className="tt-brand-sub">cold-chain command</div>
+                <a
+                  href="https://bloodchain.life"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4, font: '10px var(--app-font-mono)', color: '#69d8e0', textDecoration: 'none', marginTop: 4 }}
+                >
+                  <Link2 size={10} /> bloodchain.life
+                </a>
               </div>
             </div>
 
@@ -545,6 +560,13 @@ function Home() {
               </span>
             </div>
             <div className="tt-top-actions">
+              <button
+                className="tt-ghost-btn"
+                style={{ fontSize: 11, color: '#ef7459', borderColor: 'rgba(239,116,89,0.3)' }}
+                onClick={() => setOperatorRole(null)}
+              >
+                Exit Pilot
+              </button>
               <button
                 className="tt-icon-btn"
                 aria-label="View alerts"

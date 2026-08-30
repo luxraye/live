@@ -22,6 +22,14 @@ export default function ManifestScreen() {
         title="Active manifest"
         right={<IconButton icon="message-square" label="Open pilot survey" onPress={() => setSurveyOpen(true)} active={pendingFeedback > 0} />}
       />
+      <View style={{ paddingHorizontal: 16, marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Text style={{ fontSize: 10, fontFamily: 'monospace', color: colors.primary, fontWeight: '700' }}>
+          COURIER: AMANTLE K. (TR-104)
+        </Text>
+        <Text style={{ fontSize: 10, fontFamily: 'monospace', color: colors.mutedForeground }}>
+          bloodchain.life
+        </Text>
+      </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.signalRow, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
           <View style={styles.signalLeft}>

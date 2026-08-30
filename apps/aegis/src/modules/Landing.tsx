@@ -69,9 +69,14 @@ export default function Landing({ onLogin }: { onLogin: (name: string) => void }
             <p className="text-[10px] font-bold uppercase tracking-widest text-mute">Ward &amp; Theatre Portal</p>
           </div>
         </div>
-        <span className="flex items-center gap-1.5 rounded-full border border-cyanst/40 bg-cyanst/10 px-3 py-1.5 text-[11px] font-bold text-cyanst">
-          <Link2 size={12} /> Part of the Bloodchain ecosystem
-        </span>
+        <a
+          href="https://bloodchain.life"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 rounded-full border border-cyanst/40 bg-cyanst/10 px-3.5 py-1.5 text-[11px] font-bold text-cyanst hover:bg-cyanst/20 transition-all hover:scale-105"
+        >
+          <Link2 size={12} /> Part of the Bloodchain ecosystem · bloodchain.life
+        </a>
       </header>
 
       <div className="grid items-start gap-10 lg:grid-cols-[1.2fr_1fr]">
@@ -215,9 +220,27 @@ export default function Landing({ onLogin }: { onLogin: (name: string) => void }
             <span className="h-px flex-1 bg-edge" />
           </div>
 
-          <BigButton variant="cyan" className="w-full" disabled={busy} onClick={() => signIn(true)} id="demo-button">
-            <ChevronRight size={18} /> ENTER PILOT DEMO MODE
-          </BigButton>
+          <div className="space-y-2">
+            <BigButton variant="cyan" className="w-full" disabled={busy} onClick={() => onLogin('Dr. T. Kgosi (Trauma / ER)')} id="demo-button">
+              <ChevronRight size={18} /> ENTER AS DR. T. KGOSI (TRAUMA / ER)
+            </BigButton>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                className="rounded-xl border border-edge bg-panel2 p-2 text-left text-[11px] font-bold text-inktext hover:border-cyanst hover:bg-cyanst/10 transition-colors"
+                onClick={() => onLogin('Dr. M. Tau (Obstetrics)')}
+              >
+                👶 Dr. M. Tau (Obstetrics)
+              </button>
+              <button
+                type="button"
+                className="rounded-xl border border-edge bg-panel2 p-2 text-left text-[11px] font-bold text-inktext hover:border-cyanst hover:bg-cyanst/10 transition-colors"
+                onClick={() => onLogin('Dr. K. Moloi (Pediatrics)')}
+              >
+                🩺 Dr. K. Moloi (Pediatrics)
+              </button>
+            </div>
+          </div>
 
           <p className="mt-4 text-center text-[10px] leading-relaxed text-mute/80">
             Access is limited to registered clinical staff. Sign-ins and all portal actions are
@@ -227,7 +250,7 @@ export default function Landing({ onLogin }: { onLogin: (name: string) => void }
       </div>
 
       <footer className="mt-12 border-t border-edge pt-5 text-center text-[10px] text-mute/70">
-        Aegis Clinical · a Bloodchain platform · Piloting at Princess Marina &amp; Nyangabgwe Referral Hospitals, Botswana
+        Aegis Clinical · a <a href="https://bloodchain.life" target="_blank" rel="noopener noreferrer" className="font-bold text-cyanst underline">Bloodchain platform</a> · Piloting at Princess Marina &amp; Nyangabgwe Referral Hospitals, Botswana
       </footer>
     </div>
   )
