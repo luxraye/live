@@ -11,7 +11,7 @@ services:
     name: bloodchain-api
     runtime: node
     plan: free
-    buildCommand: npm install -g pnpm && pnpm install && pnpm --filter @workspace/api-server run build
+    buildCommand: corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm --filter @workspace/api-server run build
     startCommand: pnpm --filter @workspace/api-server run start
     envVars:
       - key: PORT
@@ -23,7 +23,7 @@ services:
           name: bloodchain-db
           property: connectionString
       - key: CLERK_SECRET_KEY
-        sync: false # Set via Render dashboard
+        sync: false
       - key: CLERK_PUBLISHABLE_KEY
         sync: false
       - key: FABRIC_NODE_URL
@@ -38,7 +38,7 @@ services:
     name: bloodchain-fabric-node
     runtime: node
     plan: free
-    buildCommand: npm install -g pnpm && pnpm install && pnpm --filter bloodchain-fabric-node run build
+    buildCommand: corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm --filter bloodchain-fabric-node run build
     startCommand: pnpm --filter bloodchain-fabric-node run start
     envVars:
       - key: PORT
@@ -62,7 +62,7 @@ services:
   - type: web
     name: bloodchain-rubric
     runtime: static
-    buildCommand: npm install -g pnpm && pnpm install && pnpm --filter rubric run build
+    buildCommand: corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm --filter rubric run build
     staticPublishPath: ./apps/rubric/dist
     routes:
       - type: rewrite
@@ -78,7 +78,7 @@ services:
   - type: web
     name: bloodchain-demo
     runtime: static
-    buildCommand: npm install -g pnpm && pnpm install && pnpm --filter demo-hub run build
+    buildCommand: corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm --filter demo-hub run build
     staticPublishPath: ./apps/demo-hub/dist/public
     routes:
       - type: rewrite
@@ -94,7 +94,7 @@ services:
   - type: web
     name: bloodchain-aegis
     runtime: static
-    buildCommand: npm install -g pnpm && pnpm install && pnpm --filter @bloodchain/aegis run build
+    buildCommand: corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm --filter @bloodchain/aegis run build
     staticPublishPath: ./apps/aegis/dist
     routes:
       - type: rewrite
@@ -108,7 +108,7 @@ services:
   - type: web
     name: bloodchain-crucible
     runtime: static
-    buildCommand: npm install -g pnpm && pnpm install && pnpm --filter @workspace/crucible-lab run build
+    buildCommand: corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm --filter @workspace/crucible-lab run build
     staticPublishPath: ./apps/crucible/dist
     routes:
       - type: rewrite
@@ -122,7 +122,7 @@ services:
   - type: web
     name: bloodchain-torrent-desktop
     runtime: static
-    buildCommand: npm install -g pnpm && pnpm install && pnpm --filter @bloodchain/torrent-desktop run build
+    buildCommand: corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm --filter @bloodchain/torrent-desktop run build
     staticPublishPath: ./apps/torrent-desktop/dist
     routes:
       - type: rewrite
@@ -136,7 +136,7 @@ services:
   - type: web
     name: bloodchain-scyther
     runtime: static
-    buildCommand: npm install -g pnpm && pnpm install && pnpm --filter scyther-mobile run build
+    buildCommand: corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm --filter scyther-mobile run build
     staticPublishPath: ./apps/scyther-mobile/dist
     routes:
       - type: rewrite
@@ -152,7 +152,7 @@ services:
   - type: web
     name: bloodchain-torrent-mobile
     runtime: static
-    buildCommand: npm install -g pnpm && pnpm install && pnpm --filter @bloodchain/torrent run build
+    buildCommand: corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm --filter @bloodchain/torrent run build
     staticPublishPath: ./apps/torrent/dist
     routes:
       - type: rewrite
