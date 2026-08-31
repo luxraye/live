@@ -91,88 +91,76 @@ const PULSE_MOBILE_APK_URL = 'https://expo.dev/artifacts/eas/FtHBvqOh8tQf_Qjta5p
 
 const ROADMAP: RoadmapItem[] = [
   {
-    id: 'pulse',
-    name: 'Pulse',
-    fullName: 'Pulse — Donor Portal',
+    id: 'scyther',
+    name: 'Scyther',
+    fullName: 'Scyther — Donor Digital Card',
     status: 'LIVE',
-    completion: 85,
-    description: 'Citizen donor registration, donation history tracking, and airtime reward system.',
+    completion: 90,
+    description: 'Citizen donor registration, digital blood card, and real-time shortage alerts.',
     detail:
-      'Web-based portal for Botswana citizens to enroll as blood donors, view their donation history on the Strand ledger, and receive automated airtime compensation for each qualifying donation.',
-    url: '/pulse/',
+      'Mobile-first platform for Botswana blood donors to enroll, view their donation history on the Strand ledger, and respond to emergency shortage alerts. Designed for both web and native Android/iOS with Expo.',
+    url: 'https://bloodchain-scyther.onrender.com',
     icon: <Heart className="w-4 h-4" />,
   },
   {
-    id: 'pulse-mobile',
-    name: 'Pulse Mobile',
-    fullName: 'Pulse Mobile — Donor App',
+    id: 'aegis',
+    name: 'Aegis',
+    fullName: 'Aegis — Clinical Ward Portal',
     status: 'LIVE',
-    completion: 70,
-    description: 'Native mobile donor app for Android and iOS field registration.',
+    completion: 92,
+    description: 'Hospital ward interface for STAT ordering, MTP protocols, and bedside transfusion management.',
     detail:
-      'React Native / Expo application enabling community health workers and donors to register in the field. Designed for low-connectivity rural environments with a mobile-first UX.',
-    url: null,
-    icon: <Smartphone className="w-4 h-4" />,
-  },
-  {
-    id: 'sanctum',
-    name: 'Sanctum',
-    fullName: 'Sanctum — Hospital Blood Bank',
-    status: 'LIVE',
-    completion: 80,
-    description: 'Facility-level interface for blood bank technicians to log, manage, and route units.',
-    detail:
-      'Terminal-style workstation interface for hospital blood bank staff. Logs incoming units onto the Strand ledger, manages real-time inventory, and submits routing requests to the Torrent engine for inter-facility transfers.',
-    url: '/sanctum/',
-    icon: <Database className="w-4 h-4" />,
-  },
-  {
-    id: 'vigil',
-    name: 'Vigil',
-    fullName: 'Vigil — National Dashboard',
-    status: 'LIVE',
-    completion: 80,
-    description: 'Ministry-level epidemiological command dashboard for national blood grid oversight.',
-    detail:
-      'Real-time situational awareness for NBTS directors and Ministry of Health officials. Displays national inventory distribution across all facilities, shortage alerts ranked by severity, and the live Strand ledger event feed.',
-    url: '/vigil/',
-    icon: <Network className="w-4 h-4" />,
+      'Ward-facing clinical portal for doctors and nurses to place STAT trauma orders, initiate Massive Transfusion Protocols, and verify unit compatibility against the Strand ledger before administration.',
+    url: 'https://bloodchain-aegis.onrender.com',
+    icon: <ShieldCheck className="w-4 h-4" />,
   },
   {
     id: 'crucible',
     name: 'Crucible',
     fullName: 'Crucible — Blood Processing Lab',
-    status: 'PLANNED',
-    completion: 0,
-    description: 'Lab technician interface for screening, testing, and component separation of blood units.',
+    status: 'LIVE',
+    completion: 88,
+    description: 'Lab technician interface for serology screening, fractionation, and cold vault management.',
     detail:
-      'Fills the critical gap between collection and distribution. Lab analysts log HIV, Hep B/C, malaria, and syphilis screening results. Each test outcome is cryptographically attested on the Strand ledger before a unit can be released for distribution.',
-    url: null,
+      'Fills the critical gap between collection and distribution. Lab technologists log ABO/RhD typing and viral screening results (HIV, HBsAg, HCV, VDRL). Centrifugal fractionation splits units into PRBC, FFP, and platelets. Each outcome is cryptographically attested on the Strand ledger before a unit can be released.',
+    url: 'https://bloodchain-crucible.onrender.com',
     icon: <FlaskConical className="w-4 h-4" />,
   },
   {
-    id: 'transfuse',
-    name: 'Transfuse',
-    fullName: 'Transfuse — Bedside Clinical Interface',
-    status: 'PLANNED',
-    completion: 0,
-    description: "Point-of-care interface for nurses to verify, administer, and close a unit's lifecycle.",
+    id: 'rubric',
+    name: 'Rubric',
+    fullName: 'Rubric — National Situation Room',
+    status: 'LIVE',
+    completion: 90,
+    description: 'Ministry-level epidemiological command dashboard for national blood grid oversight.',
     detail:
-      'The final node in the blood lifecycle. Clinicians scan a unit and a patient wristband, verify compatibility via the ledger, and log the transfusion event — permanently and immutably closing the chain of custody.',
-    url: null,
-    icon: <ShieldCheck className="w-4 h-4" />,
+      'Real-time situational awareness for NBTS directors and Ministry of Health officials. Displays national inventory distribution across all facilities, shortage alerts ranked by severity, donor verification queues, and the live Strand ledger event feed.',
+    url: 'https://bloodchain-rubric.onrender.com',
+    icon: <Network className="w-4 h-4" />,
   },
   {
-    id: 'relay',
-    name: 'Relay',
-    fullName: 'Relay — Courier & Transport',
-    status: 'PLANNED',
-    completion: 0,
-    description: 'Mobile app for blood couriers managing inter-facility transport and chain-of-custody handoffs.',
+    id: 'torrent-desktop',
+    name: 'Torrent Desktop',
+    fullName: 'Torrent Desktop — Fleet Command',
+    status: 'LIVE',
+    completion: 85,
+    description: 'Logistics command interface for cold-chain fleet dispatch and corridor projection.',
     detail:
-      'GPS-tracked courier interface for blood logistics personnel. Continuous temperature monitoring during transit, digital handoff signatures at each facility checkpoint, and real-time status updates streamed to Vigil.',
-    url: null,
+      'Full-screen presentation-grade dispatch console. Operators manage courier assignments, monitor real-time GPS progression and 2°C–8°C Sensitech temperature telemetry, and receive hospital arrival confirmations for every blood unit in transit.',
+    url: 'https://bloodchain-torrent-desktop.onrender.com',
     icon: <Truck className="w-4 h-4" />,
+  },
+  {
+    id: 'torrent-mobile',
+    name: 'Torrent Mobile',
+    fullName: 'Torrent Mobile — Courier Handset',
+    status: 'LIVE',
+    completion: 80,
+    description: 'Mobile courier app for live manifest, crate scanning, and chain-of-custody handoffs.',
+    detail:
+      'GPS-tracked courier interface for blood logistics personnel. Continuous temperature monitoring during transit, digital handoff signatures at each facility checkpoint, and real-time status updates streamed to the Rubric situation room.',
+    url: 'https://bloodchain-torrent-mobile.onrender.com',
+    icon: <Smartphone className="w-4 h-4" />,
   },
 ];
 
@@ -956,62 +944,33 @@ export default function Home() {
             </Reveal>
 
             {/* Live apps */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0 border-t border-l border-border mb-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0 border-t border-l border-border mb-0">
               {[
-                { label: 'Vigil', name: 'National Dashboard', desc: 'Ministry oversight and epidemiological command.', url: '/vigil/', status: 'LIVE' },
-                { label: 'Sanctum', name: 'Hospital Blood Bank', desc: 'Facility-level unit logging and inventory management.', url: '/sanctum/', status: 'LIVE' },
-                { label: 'Pulse', name: 'Donor Portal', desc: 'Citizen donor registration and impact tracking.', url: '/pulse/', status: 'LIVE' },
-                { label: 'Pulse Mobile', name: 'Donor App', desc: 'Field registration via Expo Go on any smartphone.', url: null, status: 'LIVE' },
+                { label: 'Scyther', name: 'Donor Digital Card', desc: 'Citizen donor registration, digital blood card, and shortage alert responses.', url: 'https://bloodchain-scyther.onrender.com', icon: <Heart className="w-4 h-4" /> },
+                { label: 'Aegis', name: 'Clinical Ward Portal', desc: 'Hospital ward STAT ordering, MTP protocols, and transfusion compatibility checks.', url: 'https://bloodchain-aegis.onrender.com', icon: <ShieldCheck className="w-4 h-4" /> },
+                { label: 'Crucible', name: 'Blood Processing Lab', desc: 'Serology screening, centrifugal fractionation, and cold vault A1–D4 matrix.', url: 'https://bloodchain-crucible.onrender.com', icon: <FlaskConical className="w-4 h-4" /> },
+                { label: 'Rubric', name: 'National Situation Room', desc: 'Ministry command dashboard, deficit matrix, and donor verification queue.', url: 'https://bloodchain-rubric.onrender.com', icon: <Network className="w-4 h-4" /> },
+                { label: 'Torrent Desktop', name: 'Fleet Command', desc: 'Cold-chain fleet dispatch, GPS corridor tracking, and Sensitech telemetry.', url: 'https://bloodchain-torrent-desktop.onrender.com', icon: <Truck className="w-4 h-4" /> },
+                { label: 'Torrent Mobile', name: 'Courier Handset', desc: 'Courier live manifest, crate scanning, and chain-of-custody handoffs.', url: 'https://bloodchain-torrent-mobile.onrender.com', icon: <Smartphone className="w-4 h-4" /> },
               ].map((app, i) => (
-                <Reveal key={app.label} delay={i * 0.1}>
-                  {app.url ? (
-                    <button
-                      onClick={() => openModal(app.url!, `${app.label} — ${app.name}`)}
-                      className="block w-full text-left border-r border-b border-border p-8 hover:bg-muted/30 transition-colors group"
-                    >
-                      <div className="flex justify-between items-start mb-8">
-                        <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{app.label}</span>
-                        <span className="font-mono text-[10px] uppercase tracking-widest text-primary border border-primary/30 bg-primary/5 px-2 py-0.5">{app.status}</span>
-                      </div>
-                      <h3 className="font-heading text-lg font-bold mb-2 group-hover:text-primary transition-colors">{app.name}</h3>
-                      <p className="text-muted-foreground text-sm leading-relaxed mb-4">{app.desc}</p>
-                      <div className="flex items-center gap-2 font-mono text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Maximize2 className="w-3 h-3" /> Open
-                      </div>
-                    </button>
-                  ) : (
-                    <div className="border-r border-b border-border p-8">
-                      <div className="flex justify-between items-start mb-8">
-                        <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{app.label}</span>
-                        <span className="font-mono text-[10px] uppercase tracking-widest text-primary border border-primary/30 bg-primary/5 px-2 py-0.5">{app.status}</span>
-                      </div>
-                      <h3 className="font-heading text-lg font-bold mb-2">{app.name}</h3>
-                      <p className="text-muted-foreground text-sm leading-relaxed mb-4">{app.desc}</p>
-                      <a href="#demo-access" className="flex items-center gap-2 font-mono text-xs text-muted-foreground hover:text-foreground transition-colors">
-                        <Smartphone className="w-3 h-3" /> See download instructions
-                      </a>
+                <Reveal key={app.label} delay={i * 0.08}>
+                  <a
+                    href={app.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full text-left border-r border-b border-border p-8 hover:bg-muted/30 transition-colors group"
+                  >
+                    <div className="flex justify-between items-start mb-6">
+                      <span className="text-muted-foreground">{app.icon}</span>
+                      <span className="font-mono text-[10px] uppercase tracking-widest text-primary border border-primary/30 bg-primary/5 px-2 py-0.5">LIVE</span>
                     </div>
-                  )}
-                </Reveal>
-              ))}
-            </div>
-
-            {/* Roadmap apps (dimmed) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border-t border-l border-border opacity-40">
-              {[
-                { label: 'Crucible', name: 'Blood Processing Lab', desc: 'Screening and component separation attestation.' },
-                { label: 'Transfuse', name: 'Bedside Clinical Interface', desc: 'Point-of-care administration and lifecycle close.' },
-                { label: 'Relay', name: 'Courier & Transport', desc: 'Chain-of-custody handoffs and temperature monitoring.' },
-              ].map((app, i) => (
-                <Reveal key={app.label} delay={i * 0.1}>
-                  <div className="border-r border-b border-border p-8">
-                    <div className="flex justify-between items-start mb-8">
-                      <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{app.label}</span>
-                      <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground border border-border px-2 py-0.5">Planned</span>
+                    <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1">{app.label}</div>
+                    <h3 className="font-heading text-lg font-bold mb-2 group-hover:text-primary transition-colors">{app.name}</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed mb-4">{app.desc}</p>
+                    <div className="flex items-center gap-2 font-mono text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ExternalLink className="w-3 h-3" /> Open in new tab
                     </div>
-                    <h3 className="font-heading text-lg font-bold mb-2">{app.name}</h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">{app.desc}</p>
-                  </div>
+                  </a>
                 </Reveal>
               ))}
             </div>
