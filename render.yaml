@@ -3,14 +3,14 @@ databases:
     databaseName: bloodchain
     user: bloodchain_admin
     region: oregon
-    plan: starter
+    plan: free
 
 services:
   # ─── 1. CORE API BACKEND ──────────────────────────────────────────────────
   - type: web
     name: bloodchain-api
     runtime: node
-    plan: starter
+    plan: free
     buildCommand: npm install -g pnpm && pnpm install && pnpm --filter @workspace/api-server run build
     startCommand: pnpm --filter @workspace/api-server run start
     envVars:
@@ -37,7 +37,7 @@ services:
   - type: web
     name: bloodchain-fabric-node
     runtime: node
-    plan: starter
+    plan: free
     buildCommand: npm install -g pnpm && pnpm install && pnpm --filter bloodchain-fabric-node run build
     startCommand: pnpm --filter bloodchain-fabric-node run start
     envVars:
