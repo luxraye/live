@@ -2,6 +2,7 @@
   "name": "bloodchain-monorepo",
   "version": "1.0.0",
   "private": true,
+  "packageManager": "pnpm@11.22.0",
   "scripts": {
     "dev:demo": "pnpm --filter demo-hub run dev",
     "dev:scyther": "pnpm --filter scyther-mobile run dev",
