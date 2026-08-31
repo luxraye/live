@@ -1,0 +1,161 @@
+databases:
+  - name: bloodchain-db
+    databaseName: bloodchain
+    user: bloodchain_admin
+    region: oregon
+    plan: starter
+
+services:
+  # ─── 1. CORE API BACKEND ──────────────────────────────────────────────────
+  - type: web
+    name: bloodchain-api
+    runtime: node
+    plan: starter
+    buildCommand: npm install -g pnpm && pnpm install && pnpm --filter @workspace/api-server run build
+    startCommand: pnpm --filter @workspace/api-server run start
+    envVars:
+      - key: PORT
+        value: "5000"
+      - key: NODE_ENV
+        value: "production"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bloodchain-db
+          property: connectionString
+      - key: CLERK_SECRET_KEY
+        sync: false # Set via Render dashboard
+      - key: CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: FABRIC_NODE_URL
+        value: "https://bloodchain-fabric-node.onrender.com"
+      - key: FABRIC_GATEWAY_SECRET
+        sync: false
+      - key: CORS_ORIGIN
+        value: "*"
+
+  # ─── 2. HYPERLEDGER FABRIC GATEWAY SERVICE ───────────────────────────────
+  - type: web
+    name: bloodchain-fabric-node
+    runtime: node
+    plan: starter
+    buildCommand: npm install -g pnpm && pnpm install && pnpm --filter bloodchain-fabric-node run build
+    startCommand: pnpm --filter bloodchain-fabric-node run start
+    envVars:
+      - key: PORT
+        value: "3001"
+      - key: NODE_ENV
+        value: "production"
+      - key: FABRIC_MOCK_MODE
+        value: "true"
+      - key: ALLOWED_ORIGINS
+        value: "https://bloodchain.life,https://www.bloodchain.life,https://rubric.bloodchain.life"
+      - key: FABRIC_GATEWAY_SECRET
+        generateValue: true
+      - key: FABRIC_PEER_ENDPOINT
+        value: "localhost:7051"
+      - key: FABRIC_MSP_ID
+        value: "Org1MSP"
+      - key: FABRIC_PEER_HOST_ALIAS
+        value: "peer0.org1.example.com"
+
+  # ─── 3. RUBRIC SITUATION ROOM (OPERATOR COMMAND) ──────────────────────────
+  - type: web
+    name: bloodchain-rubric
+    runtime: static
+    buildCommand: npm install -g pnpm && pnpm install && pnpm --filter rubric run build
+    staticPublishPath: ./apps/rubric/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: "https://bloodchain-api.onrender.com"
+      - key: VITE_CLERK_PUBLISHABLE_KEY
+        sync: false
+
+  # ─── 4. DEMO MARKETING HUB & PUBLIC LEDGER ────────────────────────────────
+  - type: web
+    name: bloodchain-demo
+    runtime: static
+    buildCommand: npm install -g pnpm && pnpm install && pnpm --filter demo-hub run build
+    staticPublishPath: ./apps/demo-hub/dist/public
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_FABRIC_NODE_URL
+        value: "https://bloodchain-fabric-node.onrender.com"
+
+  # ─── 5. AEGIS CLINICAL WARD PORTAL ────────────────────────────────────────
+  - type: web
+    name: bloodchain-aegis
+    runtime: static
+    buildCommand: npm install -g pnpm && pnpm install && pnpm --filter @bloodchain/aegis run build
+    staticPublishPath: ./apps/aegis/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: "https://bloodchain-api.onrender.com"
+
+  # ─── 6. CRUCIBLE LAB PORTAL ───────────────────────────────────────────────
+  - type: web
+    name: bloodchain-crucible
+    runtime: static
+    buildCommand: npm install -g pnpm && pnpm install && pnpm --filter @workspace/crucible-lab run build
+    staticPublishPath: ./apps/crucible/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: "https://bloodchain-api.onrender.com"
+
+  # ─── 7. TORRENT DESKTOP (FLEET COMMAND) ───────────────────────────────────
+  - type: web
+    name: bloodchain-torrent-desktop
+    runtime: static
+    buildCommand: npm install -g pnpm && pnpm install && pnpm --filter @bloodchain/torrent-desktop run build
+    staticPublishPath: ./apps/torrent-desktop/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: "https://bloodchain-api.onrender.com"
+
+  # ─── 8. SCYTHER MOBILE (DONOR PWA) ────────────────────────────────────────
+  - type: web
+    name: bloodchain-scyther
+    runtime: static
+    buildCommand: npm install -g pnpm && pnpm install && pnpm --filter scyther-mobile run build
+    staticPublishPath: ./apps/scyther-mobile/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: EXPO_PUBLIC_API_BASE_URL
+        value: "https://bloodchain-api.onrender.com"
+      - key: EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY
+        sync: false
+
+  # ─── 9. TORRENT MOBILE (COURIER PWA) ──────────────────────────────────────
+  - type: web
+    name: bloodchain-torrent-mobile
+    runtime: static
+    buildCommand: npm install -g pnpm && pnpm install && pnpm --filter @bloodchain/torrent run build
+    staticPublishPath: ./apps/torrent/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: EXPO_PUBLIC_API_BASE_URL
+        value: "https://bloodchain-api.onrender.com"
