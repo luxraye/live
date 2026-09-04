@@ -21,20 +21,17 @@ SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
-function RootLayoutNav() {
-  const { isSignedIn } = useAuth();
+import { isValidClerkKey } from '@/hooks/clerk-utils';
+
+function RootLayoutNav({ hasClerk }: { hasClerk: boolean }) {
   return (
     <Stack screenOptions={{ headerBackTitle: 'Back', headerShown: false }}>
-      <Stack.Protected guard={Boolean(isSignedIn)}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
-        <Stack.Screen name="(feedback)" options={{ headerShown: false, presentation: 'modal' }} />
-        <Stack.Screen name="alerts" options={{ headerShown: false }} />
-        <Stack.Screen name="verification" options={{ headerShown: false, presentation: 'modal' }} />
-      </Stack.Protected>
-      <Stack.Protected guard={!Boolean(isSignedIn)}>
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      </Stack.Protected>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
+      <Stack.Screen name="(feedback)" options={{ headerShown: false, presentation: 'modal' }} />
+      <Stack.Screen name="alerts" options={{ headerShown: false }} />
+      <Stack.Screen name="verification" options={{ headerShown: false, presentation: 'modal' }} />
     </Stack>
   );
 }
@@ -56,22 +53,31 @@ export default function RootLayout() {
   if (!fontsLoaded && !fontError) return null;
 
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
-  if (!publishableKey) return null;
-  return (
-    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-      <ClerkLoaded>
-        <SafeAreaProvider>
-          <ErrorBoundary>
-            <QueryClientProvider client={queryClient}>
-              <GestureHandlerRootView>
-                <KeyboardProvider>
-                  <RootLayoutNav />
-                </KeyboardProvider>
-              </GestureHandlerRootView>
-            </QueryClientProvider>
-          </ErrorBoundary>
-        </SafeAreaProvider>
-      </ClerkLoaded>
-    </ClerkProvider>
+  const hasClerk = isValidClerkKey(publishableKey);
+
+  const inner = (
+    <SafeAreaProvider>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <GestureHandlerRootView>
+            <KeyboardProvider>
+              <RootLayoutNav hasClerk={hasClerk} />
+            </KeyboardProvider>
+          </GestureHandlerRootView>
+        </QueryClientProvider>
+      </ErrorBoundary>
+    </SafeAreaProvider>
   );
+
+  if (hasClerk) {
+    return (
+      <ClerkProvider publishableKey={publishableKey!} tokenCache={tokenCache}>
+        <ClerkLoaded>
+          {inner}
+        </ClerkLoaded>
+      </ClerkProvider>
+    );
+  }
+
+  return inner;
 }

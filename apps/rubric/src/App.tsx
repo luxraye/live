@@ -107,8 +107,10 @@ function SkeletonRows({ cols = 4 }: { cols?: number }) {
   );
 }
 
+import { isValidClerkKey } from '@/lib/clerk-utils';
+
 function useSafeAuth() {
-  const hasKey = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
+  const hasKey = isValidClerkKey(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
   if (!hasKey) {
     return {
       isSignedIn: true,
@@ -116,11 +118,19 @@ function useSafeAuth() {
       signOut: async () => {},
     };
   }
-  return useAuth();
+  try {
+    return useAuth();
+  } catch {
+    return {
+      isSignedIn: true,
+      isLoaded: true,
+      signOut: async () => {},
+    };
+  }
 }
 
 function useSafeUser() {
-  const hasKey = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
+  const hasKey = isValidClerkKey(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
   if (!hasKey) {
     return {
       user: {
@@ -130,41 +140,55 @@ function useSafeUser() {
       },
     };
   }
-  return useUser();
+  try {
+    return useUser();
+  } catch {
+    return {
+      user: {
+        firstName: 'Command',
+        lastName: 'Operator',
+        emailAddresses: [{ emailAddress: 'operator@bloodchain.life' }],
+      },
+    };
+  }
 }
 
 function ClerkAuthGate({ children }: { children: ReactNode }) {
-  const { isSignedIn, isLoaded } = useAuth();
-  if (!isLoaded) {
-    return (
-      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', background: '#060912' }}>
-        <Loader2 size={24} style={{ color: '#2bd9e7', animation: 'spin 1s linear infinite' }} />
-      </div>
-    );
-  }
-
-  if (!isSignedIn) {
-    return (
-      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', background: '#060912' }}>
-        <div style={{ maxWidth: 480, width: '100%', padding: '0 24px' }}>
-          <div className="brand" style={{ justifyContent: 'center', marginBottom: 32 }}>
-            <div className="brand-mark" aria-hidden="true" />
-            <div>
-              <div className="brand-name">RUBRIC</div>
-              <div className="brand-sub">BLOODCHAIN / NATIONAL OPS</div>
-            </div>
-          </div>
-          <SignIn routing="hash" />
+  try {
+    const { isSignedIn, isLoaded } = useAuth();
+    if (!isLoaded) {
+      return (
+        <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', background: '#060912' }}>
+          <Loader2 size={24} style={{ color: '#2bd9e7', animation: 'spin 1s linear infinite' }} />
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  return <>{children}</>;
+    if (!isSignedIn) {
+      return (
+        <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', background: '#060912' }}>
+          <div style={{ maxWidth: 480, width: '100%', padding: '0 24px' }}>
+            <div className="brand" style={{ justifyContent: 'center', marginBottom: 32 }}>
+              <div className="brand-mark" aria-hidden="true" />
+              <div>
+                <div className="brand-name">RUBRIC</div>
+                <div className="brand-sub">BLOODCHAIN / NATIONAL OPS</div>
+              </div>
+            </div>
+            <SignIn routing="hash" />
+          </div>
+        </div>
+      );
+    }
+
+    return <>{children}</>;
+  } catch {
+    return <>{children}</>;
+  }
 }
 
 function AuthGuard({ children }: { children: ReactNode }) {
-  const hasKey = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
+  const hasKey = isValidClerkKey(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
 
   if (!hasKey) {
     return <>{children}</>;

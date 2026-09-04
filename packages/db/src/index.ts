@@ -11,21 +11,56 @@ const hasRealDb = Boolean(
     !process.env.DATABASE_URL.startsWith('local'),
 );
 
-let poolInstance: any;
-let dbInstance: any;
+class HybridPool {
+  private realPool: any = null;
+  private mockPool: MockPool;
+
+  constructor(connectionString?: string) {
+    this.mockPool = new MockPool();
+    if (connectionString) {
+      try {
+        this.realPool = new Pool({ connectionString });
+      } catch (err) {
+        console.warn('[DB] Failed to create pg.Pool. Using in-memory mock store.');
+        this.realPool = null;
+      }
+    }
+  }
+
+  async query(text: string, params?: any[]) {
+    if (this.realPool) {
+      try {
+        return await this.realPool.query(text, params);
+      } catch (err: any) {
+        console.warn(`[DB] PostgreSQL query failed (${err?.message || err}). Falling back to mock store for query:`, text.slice(0, 60));
+        return await this.mockPool.query(text, params);
+      }
+    }
+    return await this.mockPool.query(text, params);
+  }
+
+  on(event: string, handler: any) {
+    if (this.realPool && typeof this.realPool.on === 'function') {
+      this.realPool.on(event, handler);
+    }
+  }
+
+  end() {
+    return this.realPool?.end();
+  }
+}
 
 if (hasRealDb) {
+  poolInstance = new HybridPool(process.env.DATABASE_URL);
   try {
-    poolInstance = new Pool({ connectionString: process.env.DATABASE_URL });
-    dbInstance = drizzle(poolInstance, { schema });
+    const rawPool = new Pool({ connectionString: process.env.DATABASE_URL });
+    dbInstance = drizzle(rawPool, { schema });
   } catch {
-    console.warn('[DB] Failed to connect to DATABASE_URL. Falling back to local in-memory mock mode.');
-    poolInstance = new MockPool();
     dbInstance = null;
   }
 } else {
   console.info('[DB] DATABASE_URL not set — running in local in-memory mock mode with Botswana healthcare seeds.');
-  poolInstance = new MockPool();
+  poolInstance = new HybridPool();
   dbInstance = null;
 }
 

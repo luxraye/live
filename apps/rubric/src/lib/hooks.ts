@@ -81,12 +81,27 @@ export type ShortageRequest = {
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
+import { isValidClerkKey } from './clerk-utils';
+
 function useToken() {
-  const hasClerk = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
+  const hasClerk = isValidClerkKey(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
   if (hasClerk) {
     try {
-      const { getToken } = useAuth();
-      return () => getToken();
+      const auth = useAuth();
+      return async () => {
+        try {
+          if (!auth || !auth.isSignedIn) {
+            return 'dev-operator-demo';
+          }
+          const token = await Promise.race([
+            auth.getToken(),
+            new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500)),
+          ]);
+          return token || 'dev-operator-demo';
+        } catch {
+          return 'dev-operator-demo';
+        }
+      };
     } catch {
       return async () => 'dev-operator-demo';
     }

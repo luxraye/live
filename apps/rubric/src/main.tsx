@@ -16,12 +16,14 @@ const queryClient = new QueryClient({
   },
 });
 
-const clerkPk = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
+import { isValidClerkKey } from '@/lib/clerk-utils';
 
-if (!clerkPk) {
-  console.warn(
-    '[Rubric] VITE_CLERK_PUBLISHABLE_KEY is not set. ' +
-    'Copy .env.example to .env and add your Clerk publishable key.',
+const clerkPk = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
+const hasValidClerk = isValidClerkKey(clerkPk);
+
+if (!hasValidClerk) {
+  console.info(
+    '[Rubric] VITE_CLERK_PUBLISHABLE_KEY is not configured or placeholder — running in zero-friction sovereign pilot mode.',
   );
 }
 
@@ -37,8 +39,8 @@ createRoot(document.getElementById('root')!, {
   },
 }).render(
   <ErrorBoundary>
-    {clerkPk ? (
-      <ClerkProvider publishableKey={clerkPk}>
+    {hasValidClerk ? (
+      <ClerkProvider publishableKey={clerkPk!}>
         {content}
       </ClerkProvider>
     ) : (

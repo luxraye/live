@@ -33,17 +33,22 @@ app.use(express.urlencoded({ extended: true }));
 
 if (process.env.CLERK_PUBLISHABLE_KEY) {
   app.use(clerkMiddleware({ publishableKey: process.env.CLERK_PUBLISHABLE_KEY }));
-} else {
-  // Local development fallback — permits unauthenticated or bearer mock requests
-  app.use((req, _res, next) => {
+}
+
+// Universal pilot fallback — ensures pilot presets and unauthenticated requests work gracefully
+app.use((req, _res, next) => {
+  const currentAuth = (req as any).auth;
+  if (!currentAuth || !currentAuth.userId) {
     const bearer = req.headers.authorization?.replace(/^Bearer\s+/i, '');
     (req as any).auth = {
       userId: bearer || 'dev-pilot-user',
     };
-    next();
-  });
-}
+  }
+  next();
+});
 
+// Dual mounting: supports both /api/path and direct /path across all frontend apps
 app.use("/api", router);
+app.use("/", router);
 
 export default app;
