@@ -78,14 +78,8 @@ interface RoadmapItem {
   icon: React.ReactNode;
 }
 
-// ─── Configuration — update after running EAS build ──────────────────────────
-
-/**
- * After running `eas build --platform android --profile preview`, paste the
- * APK download URL from expo.dev here. Leave as an empty string until ready.
- * Example: "https://expo.dev/artifacts/eas/xxxx.apk"
- */
-const PULSE_MOBILE_APK_URL = 'https://expo.dev/artifacts/eas/FtHBvqOh8tQf_Qjta5pBk9DpQ8FsTgEJ174zZ3nMWqQ.apk';
+const SCYTHER_MOBILE_URL = 'https://bloodchain-scyther.onrender.com';
+const TORRENT_MOBILE_URL = 'https://bloodchain-torrent-mobile.onrender.com';
 
 // ─── Static Data ─────────────────────────────────────────────────────────────
 
@@ -330,29 +324,15 @@ function RoadmapNode({ item, index, openModal }: { item: RoadmapItem; index: num
                   <p className="text-sm leading-relaxed text-foreground/80">{item.detail}</p>
                   <div className="flex items-center gap-4 flex-wrap">
                     {item.url && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); openModal(item.url!, item.fullName); }}
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
                         className="flex items-center gap-2 px-4 py-2 bg-foreground text-background font-mono text-xs uppercase tracking-wider hover:bg-primary hover:text-primary-foreground transition-colors"
                       >
-                        <Maximize2 className="w-3 h-3" /> Open {item.name}
-                      </button>
-                    )}
-                    {item.id === 'pulse-mobile' && (
-                      PULSE_MOBILE_APK_URL ? (
-                        <a
-                          href={PULSE_MOBILE_APK_URL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-4 py-2 bg-foreground text-background font-mono text-xs uppercase tracking-wider hover:bg-primary hover:text-primary-foreground transition-colors"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Download className="w-3 h-3" /> Download APK
-                        </a>
-                      ) : (
-                        <span className="font-mono text-xs text-muted-foreground border border-border px-3 py-2 flex items-center gap-2">
-                          <Smartphone className="w-3 h-3" /> Install via Expo Go — see Demo Access below
-                        </span>
-                      )
+                        <ExternalLink className="w-3 h-3" /> Open {item.name}
+                      </a>
                     )}
                     {item.status === 'PLANNED' && (
                       <span className="font-mono text-xs text-muted-foreground">Under design — Q2 2026</span>
@@ -993,62 +973,64 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[
                 {
-                  app: 'Vigil — National Dashboard',
-                  path: '/vigil/',
-                  access: 'Read-only. No credentials required.',
+                  app: 'Rubric — National Situation Room',
+                  path: 'https://bloodchain-rubric.onrender.com',
+                  access: 'Fast Pilot Switcher (National Controller, Verification Officer, Regional Lead)',
                   items: [
-                    'Observe national inventory in real time across all 6 facilities',
-                    'View shortage alerts by blood type on the Alerts page',
-                    'Use the Alert Routing form to simulate a blood dispatch',
+                    'Observe national inventory distribution in real time across all facilities',
+                    'Inspect the live donor verification queue and approve KYC documents',
+                    'Broadcast emergency shortage alerts across the regional grid',
                   ],
-                  cta: null,
-                  apkUrl: null,
                 },
                 {
-                  app: 'Sanctum — Hospital Blood Bank',
-                  path: '/sanctum/',
-                  access: 'Open access. Default facility: FAC-001 (Princess Marina).',
+                  app: 'Aegis — Clinical Ward Portal',
+                  path: 'https://bloodchain-aegis.onrender.com',
+                  access: 'Fast Pilot Switcher (Dr. Kgosi - Trauma, Dr. Tau - Obstetrics, Dr. Moloi - Peds)',
                   items: [
-                    'Donor ID to log a unit: D-2026-0891',
-                    'Bag number example: BW-2026-008821',
-                    'Navigate: CMD_CENTRE → UNIT_INDUCT → ROUTE_CTRL',
+                    'Place STAT Emergency & MTP trauma orders for Princess Marina Hospital ER',
+                    'Conduct two-operator bedside digital compatibility verification',
+                    'Log transfusion administration and report adverse reaction alerts',
                   ],
-                  cta: null,
-                  apkUrl: null,
                 },
                 {
-                  app: 'Pulse — Donor Portal',
-                  path: '/pulse/',
-                  access: 'Registration-based. No login required.',
+                  app: 'Crucible — Blood Processing Lab',
+                  path: 'https://bloodchain-crucible.onrender.com',
+                  access: 'Fast Pilot Switcher (Senior Serologist, Fractionation Lead, Lab Director)',
                   items: [
-                    'Click "Begin Registration" to create a new donor profile',
-                    'Select any blood type (O+, A+, B+, AB−, O−…) and district',
-                    'After submission you land on your personal dashboard',
+                    'Perform whole blood unit intake and automated barcoding',
+                    'Screen ABO/RhD and viral panels (HIV, HBsAg, HCV, VDRL)',
+                    'Centrifugally fractionate into PRBC/FFP/PLT and monitor A1–D4 cold vault',
                   ],
-                  cta: null,
-                  apkUrl: null,
                 },
                 {
-                  app: 'Pulse Mobile — Donor App',
-                  path: null,
-                  access: PULSE_MOBILE_APK_URL
-                    ? 'Direct Android APK available — no Expo Go required.'
-                    : 'Install Expo Go on your phone, then scan the QR code.',
-                  items: PULSE_MOBILE_APK_URL
-                    ? [
-                        '1. Tap "Download APK" below — opens the direct build link',
-                        '2. Open the APK on your Android device and tap Install',
-                        '3. If prompted, enable "Install from unknown sources" in Settings',
-                      ]
-                    : [
-                        '1. Download Expo Go (free) from App Store or Play Store',
-                        '2. Open the Expo link or scan the QR code (available on request)',
-                        '3. Same registration flow as Pulse web — same demo data applies',
-                      ],
-                  cta: PULSE_MOBILE_APK_URL
-                    ? null
-                    : { label: 'See Mobile Setup →', href: '#demo-access' },
-                  apkUrl: PULSE_MOBILE_APK_URL || null,
+                  app: 'Torrent Desktop — Fleet Command',
+                  path: 'https://bloodchain-torrent-desktop.onrender.com',
+                  access: 'Fast Pilot Switcher (Gaborone Dispatch, Northern Fleet, Delta Express)',
+                  items: [
+                    'Monitor cold-chain corridors (A12, Trans-Kalahari) in presentation projection',
+                    'Inspect live 2°C–8°C Sensitech temperature telemetry and courier GPS',
+                    'Advance courier progress by +15% to simulate hospital handoff',
+                  ],
+                },
+                {
+                  app: 'Scyther — Donor Digital Card',
+                  path: 'https://bloodchain-scyther.onrender.com',
+                  access: '1-Tap Pilot Mode (Kabo Tau, Blood Type O−, Level 2 Verified) or Clerk Auth',
+                  items: [
+                    'View cryptographic donor identity card and digital blood certification',
+                    'Discover nearby donation clinics and mobile drives with live hours',
+                    'Receive and respond to emergency STAT blood shortage broadcasts',
+                  ],
+                },
+                {
+                  app: 'Torrent Mobile — Courier Handset',
+                  path: 'https://bloodchain-torrent-mobile.onrender.com',
+                  access: '1-Tap Courier Pilot Mode (Amantle K., Hilux B 492 BWB)',
+                  items: [
+                    'Access live courier delivery manifest and GPS corridor route',
+                    'Scan blood transport crates and verify digital custody transfers',
+                    'Stream continuous temperature telemetry directly to Rubric Situation Room',
+                  ],
                 },
               ].map((item) => (
                 <Reveal key={item.app}>
@@ -1062,28 +1044,15 @@ export default function Home() {
                         </li>
                       ))}
                     </ul>
-                    {'apkUrl' in item && item.apkUrl && (
+                    {item.path && (
                       <a
-                        href={item.apkUrl}
+                        href={item.path}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="mt-6 flex items-center gap-2 px-4 py-2 bg-foreground text-background font-mono text-xs uppercase tracking-wider hover:bg-primary hover:text-primary-foreground transition-colors self-start"
                       >
-                        <Download className="w-3 h-3" /> Download APK
+                        <ExternalLink className="w-3 h-3" /> Open {item.app.split(' — ')[0]}
                       </a>
-                    )}
-                    {item.cta && (
-                      <a href={item.cta.href}
-                        className="mt-6 flex items-center gap-2 px-4 py-2 border border-foreground text-foreground font-mono text-xs uppercase tracking-wider hover:bg-foreground hover:text-background transition-colors self-start">
-                        {item.cta.label}
-                      </a>
-                    )}
-                    {item.path && (
-                      <button
-                        onClick={() => openModal(item.path!, item.app)}
-                        className="mt-6 flex items-center gap-2 px-4 py-2 bg-foreground text-background font-mono text-xs uppercase tracking-wider hover:bg-primary hover:text-primary-foreground transition-colors self-start">
-                        <Maximize2 className="w-3 h-3" /> Open {item.app.split(' — ')[0]}
-                      </button>
                     )}
                   </div>
                 </Reveal>
@@ -1094,35 +1063,25 @@ export default function Home() {
             <Reveal delay={0.15}>
               <div className="mt-8 border border-primary/30 bg-primary/5 p-8 md:p-10">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
-                  {/* Left: primary APK install */}
+                  {/* Left: Scyther Mobile PWA & App */}
                   <div>
                     <div className="flex items-center gap-2 mb-4">
                       <Smartphone className="w-5 h-5 text-primary" />
                       <span className="font-mono text-xs uppercase tracking-widest text-primary font-bold">
-                        Install on Your Phone — Direct APK
+                        Donor Mobile Experience · Scyther
                       </span>
                     </div>
-                    <h3 className="font-heading text-2xl font-bold mb-4">Pulse Mobile Beta</h3>
+                    <h3 className="font-heading text-2xl font-bold mb-4">Scyther Mobile</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-                      No app store or Expo required — install directly from the standalone{' '}
-                      <strong className="text-foreground">Android APK</strong> and Pulse Mobile
-                      runs on your device in under a minute.
+                      Citizen blood donor mobile app built with Expo SDK 57 and React Native. Available as a full-screen{' '}
+                      <strong className="text-foreground">Progressive Web App</strong> on any browser, with native iOS and Android build pipelines.
                     </p>
                     <ol className="space-y-3 mb-6">
-                      {(PULSE_MOBILE_APK_URL
-                        ? [
-                            { n: '01', text: 'Tap "Download APK" — the standalone build downloads directly to your Android device.' },
-                            { n: '02', text: 'Open the downloaded APK and tap Install. Enable "Install from unknown sources" if prompted.' },
-                            { n: '03', text: 'Pulse Mobile launches instantly. No account required to browse.' },
-                            { n: '04', text: 'Tap "Become a donor" to register and receive your donor ID.' },
-                          ]
-                        : [
-                            { n: '01', text: 'Request the APK via the contact form below — you get a direct download link.' },
-                            { n: '02', text: 'Open the APK on your Android device and tap Install. Enable "Install from unknown sources" if prompted.' },
-                            { n: '03', text: 'Pulse Mobile launches instantly. No account required to browse.' },
-                            { n: '04', text: 'Tap "Become a donor" to register and receive your donor ID.' },
-                          ]
-                      ).map((step) => (
+                      {[
+                        { n: '01', text: 'Tap "Open Scyther PWA" to launch the mobile-optimized donor interface instantly in your browser.' },
+                        { n: '02', text: 'Select the 1-Tap Pilot Mode preset (Kabo Tau, O−) or create your donor profile.' },
+                        { n: '03', text: 'View your sovereign donor card, check local donation drives, and respond to urgent blood requests.' },
+                      ].map((step) => (
                         <li key={step.n} className="flex items-start gap-4">
                           <span className="font-mono text-xs text-primary border border-primary/30 px-2 py-0.5 shrink-0 mt-0.5">
                             {step.n}
@@ -1132,101 +1091,53 @@ export default function Home() {
                       ))}
                     </ol>
                     <div className="flex flex-wrap gap-3">
-                      {PULSE_MOBILE_APK_URL ? (
-                        <a
-                          href={PULSE_MOBILE_APK_URL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-5 py-3 bg-foreground text-background font-mono text-xs uppercase tracking-wider hover:bg-primary hover:text-primary-foreground transition-colors"
-                          data-testid="button-download-apk-primary"
-                        >
-                          <Download className="w-3.5 h-3.5" /> Download APK (Android)
-                        </a>
-                      ) : (
-                        <a
-                          href="#contact"
-                          className="flex items-center gap-2 px-5 py-3 bg-foreground text-background font-mono text-xs uppercase tracking-wider hover:bg-primary hover:text-primary-foreground transition-colors"
-                          data-testid="button-request-apk"
-                        >
-                          <Mail className="w-3.5 h-3.5" /> Request the APK
-                        </a>
-                      )}
+                      <a
+                        href={SCYTHER_MOBILE_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-5 py-3 bg-foreground text-background font-mono text-xs uppercase tracking-wider hover:bg-primary hover:text-primary-foreground transition-colors"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" /> Open Scyther PWA
+                      </a>
                     </div>
                   </div>
 
-                  {/* Right: APK details + Expo Go alternative */}
+                  {/* Right: Torrent Mobile Courier Handset */}
                   <div className="flex flex-col gap-5">
-                    {PULSE_MOBILE_APK_URL ? (
-                      <div className="border border-primary/40 bg-primary/5 p-5">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Download className="w-4 h-4 text-primary" />
-                          <p className="font-mono text-[10px] uppercase tracking-widest text-primary font-bold">
-                            Android APK — Direct Download
-                          </p>
-                        </div>
-                        <p className="font-mono text-xs text-foreground/70 leading-relaxed mb-4">
-                          Standalone build — no Expo Go required. Download and install directly on any Android device.
-                        </p>
-                        <a
-                          href={PULSE_MOBILE_APK_URL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-5 py-3 bg-foreground text-background font-mono text-xs uppercase tracking-wider hover:bg-primary hover:text-primary-foreground transition-colors w-full justify-center"
-                        >
-                          <Download className="w-3.5 h-3.5" /> Download APK
-                        </a>
-                        <p className="font-mono text-[9px] text-muted-foreground mt-2 text-center">
-                          Enable "Install from unknown sources" in Android settings if prompted.
+                    <div className="border border-primary/40 bg-primary/5 p-6">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Truck className="w-5 h-5 text-primary" />
+                        <p className="font-mono text-xs uppercase tracking-widest text-primary font-bold">
+                          Cold-Chain Courier Handset · Torrent Mobile
                         </p>
                       </div>
-                    ) : (
-                      <div className="border border-border/50 p-5 bg-card/50">
-                        <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
-                          Standalone APK
-                        </p>
-                        <p className="font-mono text-xs text-foreground/70 leading-relaxed">
-                          A direct Android APK download (no Expo Go required) is being prepared.{' '}
-                          <a href="#contact" className="text-primary hover:underline">Request the APK</a> via the contact form.
-                        </p>
-                      </div>
-                    )}
+                      <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+                        Driver-facing mobile handset for cold-chain transport. Manages active manifests, digital barcode crate scanning, Sensitech temperature logs, and delivery sign-offs.
+                      </p>
+                      <a
+                        href={TORRENT_MOBILE_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-5 py-3 bg-foreground text-background font-mono text-xs uppercase tracking-wider hover:bg-primary hover:text-primary-foreground transition-colors w-full justify-center"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" /> Open Torrent Mobile PWA
+                      </a>
+                    </div>
 
-                    {/* Alternative: Expo Go */}
+                    {/* Monorepo Local Dev Instructions */}
                     <div className="border border-border bg-card p-5">
                       <div className="flex items-center gap-2 mb-3">
-                        <QrCode className="w-4 h-4 text-muted-foreground" />
+                        <Terminal className="w-4 h-4 text-muted-foreground" />
                         <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                          Alternative Method — Expo Go
+                          Local Mobile Development
                         </span>
                       </div>
                       <p className="font-mono text-xs text-muted-foreground mb-3 leading-relaxed">
-                        On iOS, or prefer not to install an APK? Use the free{' '}
-                        <strong className="text-foreground">Expo Go</strong> app: open it → tap{' '}
-                        <strong className="text-foreground">Enter URL manually</strong> → paste:
+                        To run the mobile apps natively on iOS or Android simulator via Expo:
                       </p>
-                      <div className="bg-muted/60 border border-border px-3 py-2 font-mono text-xs text-primary break-all">
-                        exp://[replit-expo-domain]
-                      </div>
-                      <p className="font-mono text-[10px] text-muted-foreground mt-2 mb-4">
-                        The exact URL is printed as a QR code in the Replit shell each time the Expo workflow starts.
-                      </p>
-                      <div className="flex gap-3 flex-wrap">
-                        <a
-                          href="https://apps.apple.com/app/expo-go/id982107779"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-4 py-2.5 border border-border text-foreground font-mono text-xs uppercase tracking-wider hover:bg-muted/40 transition-colors"
-                        >
-                          App Store (iOS)
-                        </a>
-                        <a
-                          href="https://play.google.com/store/apps/details?id=host.exp.exponent"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-4 py-2.5 border border-border text-foreground font-mono text-xs uppercase tracking-wider hover:bg-muted/40 transition-colors"
-                        >
-                          Play Store (Android)
-                        </a>
+                      <div className="bg-muted/60 border border-border px-3 py-2 font-mono text-xs text-primary space-y-1">
+                        <div>pnpm run dev:scyther</div>
+                        <div>pnpm run dev:torrent</div>
                       </div>
                     </div>
                   </div>
