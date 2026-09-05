@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => {
     env.API_BASE_URL ||
     process.env.VITE_API_BASE_URL ||
     process.env.API_BASE_URL ||
-    'https://bloodchain-api.onrender.com'
+    'https://bloodchain-api-i9et.onrender.com'
   ).replace(/^["']|["']$/g, '').trim();
 
   return {

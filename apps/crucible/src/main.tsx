@@ -6,7 +6,8 @@ import { ErrorBoundary } from '@/components/error-boundary';
 
 import './index.css';
 
-setBaseUrl((import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, ''));
+const defaultApi = import.meta.env.PROD ? 'https://bloodchain-api-i9et.onrender.com/api' : '/api';
+setBaseUrl((import.meta.env.VITE_API_BASE_URL || defaultApi).replace(/\/$/, ''));
 
 createRoot(document.getElementById('root')!, {
   // Keeps caught errors off reportError(), which would raise the dev overlay.

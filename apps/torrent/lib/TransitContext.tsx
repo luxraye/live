@@ -192,7 +192,7 @@ export function TransitProvider({ children }: { children: React.ReactNode }) {
       const baseUrl = (
         process.env.EXPO_PUBLIC_API_BASE_URL ||
         process.env.VITE_API_BASE_URL ||
-        'https://bloodchain-api.onrender.com/api'
+        'https://bloodchain-api-i9et.onrender.com/api'
       ).replace(/\/$/, '');
       const response = await fetch(`${baseUrl}/feedback`, {
         method: 'POST',

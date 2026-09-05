@@ -17,7 +17,7 @@ if (!process.env.EXPO_PUBLIC_API_BASE_URL) {
   const apiBase =
     process.env.VITE_API_BASE_URL ||
     process.env.API_BASE_URL ||
-    'https://bloodchain-api.onrender.com';
+    'https://bloodchain-api-i9et.onrender.com';
   process.env.EXPO_PUBLIC_API_BASE_URL = apiBase.replace(/^["']|["']$/g, '').trim();
 }
 

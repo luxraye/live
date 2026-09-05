@@ -9,7 +9,10 @@
 // ─────────────────────────────────────────────────────────────
 import type { BloodOrder, ReactionAlert, SurveyPayload } from './types'
 
-export const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace(/\/$/, '')
+export const API_BASE = (
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.PROD ? 'https://bloodchain-api-i9et.onrender.com/api' : 'http://localhost:5000/api')
+).replace(/\/$/, '')
 
 const TIMEOUT_MS = 3500
 const QUEUE_KEY = 'aegis-sync-queue'
