@@ -189,8 +189,11 @@ export function TransitProvider({ children }: { children: React.ReactNode }) {
       },
       appVersion: '1.0.0-torrent',
     };
-    try {
-      const baseUrl = (process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:5000/api').replace(/\/$/, '');
+      const baseUrl = (
+        process.env.EXPO_PUBLIC_API_BASE_URL ||
+        process.env.VITE_API_BASE_URL ||
+        'https://bloodchain-api.onrender.com/api'
+      ).replace(/\/$/, '');
       const response = await fetch(`${baseUrl}/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

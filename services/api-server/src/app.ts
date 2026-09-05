@@ -31,8 +31,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-if (process.env.CLERK_PUBLISHABLE_KEY) {
-  app.use(clerkMiddleware({ publishableKey: process.env.CLERK_PUBLISHABLE_KEY }));
+const clerkPk =
+  process.env.CLERK_PUBLISHABLE_KEY ||
+  process.env.VITE_CLERK_PUBLISHABLE_KEY ||
+  process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+if (clerkPk) {
+  const cleanKey = clerkPk.replace(/^["']|["']$/g, '').trim();
+  app.use(clerkMiddleware({ publishableKey: cleanKey }));
 }
 
 // Universal pilot fallback — ensures pilot presets and unauthenticated requests work gracefully

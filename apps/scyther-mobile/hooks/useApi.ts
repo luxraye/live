@@ -1,7 +1,13 @@
 import { useAuth } from '@clerk/expo';
 import { useCallback } from 'react';
 
-const getBaseUrl = () => process.env.EXPO_PUBLIC_API_BASE_URL ?? '';
+const getBaseUrl = () =>
+  (
+    process.env.EXPO_PUBLIC_API_BASE_URL ||
+    process.env.VITE_API_BASE_URL ||
+    process.env.API_BASE_URL ||
+    'https://bloodchain-api.onrender.com'
+  ).replace(/\/$/, '');
 
 export function useApi() {
   let getToken: (() => Promise<string | null>) | null = null;

@@ -21,7 +21,7 @@ SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
-import { isValidClerkKey } from '@/hooks/clerk-utils';
+  import { isValidClerkKey, sanitizeClerkKey } from '@/hooks/clerk-utils';
 
 function RootLayoutNav({ hasClerk }: { hasClerk: boolean }) {
   return (
@@ -52,8 +52,12 @@ export default function RootLayout() {
 
   if (!fontsLoaded && !fontError) return null;
 
-  const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
-  const hasClerk = isValidClerkKey(publishableKey);
+  const rawKey =
+    process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+    process.env.VITE_CLERK_PUBLISHABLE_KEY ||
+    process.env.CLERK_PUBLISHABLE_KEY;
+  const publishableKey = sanitizeClerkKey(rawKey);
+  const hasClerk = Boolean(publishableKey);
 
   const inner = (
     <SafeAreaProvider>

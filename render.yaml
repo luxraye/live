@@ -73,6 +73,8 @@ services:
         value: "https://bloodchain-api.onrender.com"
       - key: VITE_CLERK_PUBLISHABLE_KEY
         sync: false
+      - key: CLERK_PUBLISHABLE_KEY
+        sync: false
 
   # ─── 4. DEMO MARKETING HUB & PUBLIC LEDGER ────────────────────────────────
   - type: web
@@ -145,7 +147,13 @@ services:
     envVars:
       - key: EXPO_PUBLIC_API_BASE_URL
         value: "https://bloodchain-api.onrender.com"
+      - key: VITE_API_BASE_URL
+        value: "https://bloodchain-api.onrender.com"
       - key: EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: VITE_CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: CLERK_PUBLISHABLE_KEY
         sync: false
 
   # ─── 9. TORRENT MOBILE (COURIER PWA) ──────────────────────────────────────
