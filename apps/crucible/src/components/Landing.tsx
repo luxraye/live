@@ -13,6 +13,7 @@ export interface LabOperatorProfile {
   title: string;
   idCode: string;
   labStation: string;
+  station: string;
   shift: string;
   specialty: string;
   clearanceLevel: string;
@@ -29,6 +30,7 @@ export const LAB_PROFILES: Record<string, LabOperatorProfile> = {
     title: 'Senior Serologist & Viral Screening Lead',
     idCode: 'LB-482',
     labStation: 'Princess Marina Central Transfusion Lab (Zone A)',
+    station: 'Princess Marina Central Transfusion Lab (Zone A)',
     shift: '07:00 – 19:00 CAT (Active)',
     specialty: 'ABO/RhD & Chemiluminescence Immunoassay (CLIA)',
     clearanceLevel: 'ISO 15189 Master Clearance',
@@ -43,6 +45,7 @@ export const LAB_PROFILES: Record<string, LabOperatorProfile> = {
     title: 'Component Fractionation Specialist',
     idCode: 'LB-209',
     labStation: 'NBTS National Fractionation Cleanroom (Suite 3)',
+    station: 'NBTS National Fractionation Cleanroom (Suite 3)',
     shift: '06:00 – 18:00 CAT (Active)',
     specialty: 'Centrifugal PRBC / FFP / Cryo Separation',
     clearanceLevel: 'Sterile Processing Level 3',
@@ -57,6 +60,7 @@ export const LAB_PROFILES: Record<string, LabOperatorProfile> = {
     title: 'Director of Blood Bank Quality & Transfusion Safety',
     idCode: 'LB-101',
     labStation: 'Botswana National Blood Transfusion Service (HQ)',
+    station: 'Botswana National Blood Transfusion Service (HQ)',
     shift: 'General Duty & On-Call Director',
     specialty: 'Immunohematology & Adverse Reaction Audit',
     clearanceLevel: 'National Medical Director Clearance',
@@ -65,14 +69,18 @@ export const LAB_PROFILES: Record<string, LabOperatorProfile> = {
   },
 };
 
-export function resolveLabProfile(roleInput: string): LabOperatorProfile {
+export function resolveLabProfile(roleInput?: string | null): LabOperatorProfile {
+  if (!roleInput || typeof roleInput !== 'string') {
+    return LAB_PROFILES.tebogo;
+  }
   const lower = roleInput.toLowerCase();
   if (lower.includes('naledi')) return LAB_PROFILES.naledi;
   if (lower.includes('boipelo') || lower.includes('khama')) return LAB_PROFILES.boipelo;
   if (lower.includes('tebogo')) return LAB_PROFILES.tebogo;
 
-  const clean = roleInput.replace(/^Technologists+/i, '').split('(')[0].trim() || 'Lab Technologist';
+  const clean = roleInput.replace(/^Technologist\s+/i, '').split('(')[0]?.trim() || 'Lab Technologist';
   const initials = clean.split(' ').map((n) => n[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || 'LT';
+  const stationStr = 'Regional Blood Bank Processing Unit';
   return {
     id: 'custom',
     name: clean,
@@ -80,7 +88,8 @@ export function resolveLabProfile(roleInput: string): LabOperatorProfile {
     initials,
     title: 'Certified Medical Laboratory Scientist',
     idCode: 'LB-900',
-    labStation: 'Regional Blood Bank Processing Unit',
+    labStation: stationStr,
+    station: stationStr,
     shift: 'Shift 02 · Active Duty',
     specialty: 'Clinical Serology & Storage',
     clearanceLevel: 'Standard Lab Clearance',
@@ -111,11 +120,11 @@ const FEATURES = [
 ];
 
 const ECOSYSTEM = [
-  { icon: HeartHandshake, label: 'Scyther Mobile', desc: 'Donor intake & booking', url: 'http://localhost:8081' },
+  { icon: HeartHandshake, label: 'Scyther Mobile', desc: 'Donor intake & booking', url: 'https://bloodchain-scyther.onrender.com' },
   { icon: FlaskConical, label: 'Crucible Lab', desc: 'You are here — lab & vault', active: true, url: 'https://bloodchain.life' },
-  { icon: Hospital, label: 'Aegis Clinical', desc: 'Hospital STAT orders', url: 'http://localhost:5177' },
-  { icon: Truck, label: 'Torrent Transit', desc: 'Cold-chain dispatch fleet', url: 'http://localhost:5178' },
-  { icon: Activity, label: 'Rubric Ops', desc: 'National deficit situation room', url: 'http://localhost:5176' },
+  { icon: Hospital, label: 'Aegis Clinical', desc: 'Hospital STAT orders', url: 'https://bloodchain-aegis.onrender.com' },
+  { icon: Truck, label: 'Torrent Transit', desc: 'Cold-chain dispatch fleet', url: 'https://bloodchain-torrent-desktop.onrender.com' },
+  { icon: Activity, label: 'Rubric Ops', desc: 'National deficit situation room', url: 'https://bloodchain-rubric.onrender.com' },
 ];
 
 export default function Landing({ onLogin }: { onLogin: (operatorName: string) => void }) {

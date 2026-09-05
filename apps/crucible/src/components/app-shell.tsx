@@ -80,7 +80,7 @@ export function AppShell({
               </div>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-xs font-semibold text-white">{profile.name}</div>
-                <div className="truncate text-[10px] text-sidebar-foreground/50">{profile.title.split('&')[0]}</div>
+                <div className="truncate text-[10px] text-sidebar-foreground/50">{(profile.title || 'Technologist').split('&')[0].trim()}</div>
               </div>
               {onExit && (
                 <button
@@ -115,7 +115,7 @@ export function AppShell({
             )}
             <Badge tone="teal">{profile.shift}</Badge>
             <span className="hidden font-mono-ui text-[10px] text-muted-foreground sm:inline">
-              {profile.idCode} · {profile.station.split('(')[0].trim()}
+              {profile.idCode} · {(profile.labStation || profile.station || 'Zone A').split('(')[0].trim()}
             </span>
           </div>
         </header>
