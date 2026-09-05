@@ -50,6 +50,9 @@ class HybridPool {
   }
 }
 
+let poolInstance: any;
+let dbInstance: any;
+
 if (hasRealDb) {
   poolInstance = new HybridPool(process.env.DATABASE_URL);
   try {
