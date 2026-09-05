@@ -6,7 +6,7 @@ import { defineConfig, loadEnv } from 'vite';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
-  const clerkKey = (
+  const rawClerk = (
     env.VITE_CLERK_PUBLISHABLE_KEY ||
     env.CLERK_PUBLISHABLE_KEY ||
     env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ||
@@ -16,7 +16,10 @@ export default defineConfig(({ mode }) => {
     process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ||
     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
     ''
-  ).replace(/^["']|["']$/g, '').trim();
+  ).trim();
+
+  const clerkMatch = rawClerk.match(/(pk_(test|live)_[a-zA-Z0-9_-]+)/);
+  const clerkKey = (clerkMatch ? clerkMatch[1] : rawClerk.replace(/^["']|["']$/g, '')).trim();
 
   const apiBaseUrl = (
     env.VITE_API_BASE_URL ||

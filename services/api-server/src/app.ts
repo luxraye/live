@@ -27,17 +27,29 @@ app.use(
   }),
 );
 
-app.use(cors());
+app.use(
+  cors({
+    origin: (_origin, callback) => {
+      callback(null, true);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  }),
+);
+app.options('*', cors());
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const clerkPk =
+const rawClerkPk =
   process.env.CLERK_PUBLISHABLE_KEY ||
   process.env.VITE_CLERK_PUBLISHABLE_KEY ||
   process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
-if (clerkPk) {
-  const cleanKey = clerkPk.replace(/^["']|["']$/g, '').trim();
+if (rawClerkPk) {
+  const match = rawClerkPk.match(/(pk_(test|live)_[a-zA-Z0-9_-]+)/);
+  const cleanKey = match ? match[1] : rawClerkPk.replace(/^["']|["']$/g, '').trim();
   app.use(clerkMiddleware({ publishableKey: cleanKey }));
 }
 

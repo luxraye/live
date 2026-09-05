@@ -1,15 +1,15 @@
 const { getDefaultConfig } = require('expo/metro-config');
 
 // Cross-populate Clerk publishable key from any standard naming scheme
-if (!process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY) {
-  const clerkKey =
-    process.env.VITE_CLERK_PUBLISHABLE_KEY ||
-    process.env.CLERK_PUBLISHABLE_KEY ||
-    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
-    '';
-  if (clerkKey) {
-    process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY = clerkKey.replace(/^["']|["']$/g, '').trim();
-  }
+const rawClerkKey =
+  process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+  process.env.VITE_CLERK_PUBLISHABLE_KEY ||
+  process.env.CLERK_PUBLISHABLE_KEY ||
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+  '';
+if (rawClerkKey) {
+  const match = rawClerkKey.match(/(pk_(test|live)_[a-zA-Z0-9_-]+)/);
+  process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY = match ? match[1] : rawClerkKey.replace(/^["']|["']$/g, '').trim();
 }
 
 // Cross-populate API base URL

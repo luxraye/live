@@ -1,6 +1,15 @@
+export function sanitizeClerkKey(key?: string | null): string | undefined {
+  if (!key || typeof key !== 'string') return undefined;
+  const match = key.match(/(pk_(test|live)_[a-zA-Z0-9_-]+)/);
+  const candidate = match ? match[1] : key.replace(/^["']|["']$/g, '').trim();
+  return isValidClerkKey(candidate) ? candidate : undefined;
+}
+
 export function isValidClerkKey(key?: string | null): boolean {
   if (!key || typeof key !== 'string') return false;
-  const trimmed = key.replace(/^["']|["']$/g, '').trim();
+  const match = key.match(/(pk_(test|live)_[a-zA-Z0-9_-]+)/);
+  const trimmed = match ? match[1] : key.replace(/^["']|["']$/g, '').trim();
+
   if (!trimmed.startsWith('pk_test_') && !trimmed.startsWith('pk_live_')) return false;
   if (trimmed.includes('YOUR_KEY_HERE') || trimmed.length < 25) return false;
 
@@ -20,11 +29,5 @@ export function isValidClerkKey(key?: string | null): boolean {
   } catch {
     return /^[a-zA-Z0-9_-]+$/.test(trimmed.replace(/^pk_(test|live)_/, ''));
   }
-}
-
-export function sanitizeClerkKey(key?: string | null): string | undefined {
-  if (!key || typeof key !== 'string') return undefined;
-  const trimmed = key.replace(/^["']|["']$/g, '').trim();
-  return isValidClerkKey(trimmed) ? trimmed : undefined;
 }
 
