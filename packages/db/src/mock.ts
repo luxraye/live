@@ -190,6 +190,32 @@ export class MockPool {
   async query(sql: string, params: any[] = []): Promise<{ rows: any[] }> {
     const s = sql.toLowerCase().trim();
 
+    // 1. Aggregations (COUNT / SUM) must be processed BEFORE general table SELECTs
+    if (s.includes('count(*) from donor_profiles')) {
+      return { rows: [{ count: 842 }] };
+    }
+    if (s.includes('count(*) from donor_documents')) {
+      const pending = this.dynamicDocs.filter((d) => d.status === 'pending').length;
+      return { rows: [{ count: pending || 2 }] };
+    }
+    if (s.includes('count(*) from donation_centres')) {
+      return { rows: [{ count: this.dynamicCentres.length || 4 }] };
+    }
+    if (s.includes('count(*) from donation_requests')) {
+      const open = this.dynamicRequests.filter((r) => r.is_open).length;
+      return { rows: [{ count: open || 2 }] };
+    }
+    if (s.includes('count(*) from health_articles')) {
+      return { rows: [{ count: this.dynamicArticles.length || 5 }] };
+    }
+    if (s.includes('count(*) from feedback_responses')) {
+      return { rows: [{ count: this.feedbackSubmissions.length + 42 }] };
+    }
+    if (s.includes('sum(response_count)')) {
+      const sum = this.dynamicRequests.reduce((acc, r) => acc + (r.response_count || 0), 0);
+      return { rows: [{ sum: sum + 120 }] };
+    }
+
     // Centres
     if (s.includes('from donation_centres')) {
       if (s.includes('where id = $1')) {

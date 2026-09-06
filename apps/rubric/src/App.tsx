@@ -201,8 +201,24 @@ import Landing from '@/components/Landing';
 
 function App() {
   const [pilotRole, setPilotRole] = useState<string | null>(null);
+  const { isSignedIn, signOut } = useSafeAuth();
+  const { user } = useSafeUser();
+  const hasClerk = isValidClerkKey(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
 
-  if (!pilotRole) {
+  const clerkName = user?.firstName
+    ? `${user.firstName} ${user.lastName || ''}`.trim()
+    : user?.emailAddresses?.[0]?.emailAddress;
+
+  const activeRole = pilotRole || (hasClerk && isSignedIn && clerkName ? clerkName : null);
+
+  const handleExit = () => {
+    setPilotRole(null);
+    if (hasClerk && isSignedIn) {
+      void signOut();
+    }
+  };
+
+  if (!activeRole) {
     return (
       <TooltipProvider>
         <Landing onLogin={(role) => setPilotRole(role)} />
@@ -215,7 +231,7 @@ function App() {
     <TooltipProvider>
       <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
         <ErrorBoundary resetKey="shell">
-          <Shell pilotRole={pilotRole} onExitPilot={() => setPilotRole(null)} />
+          <Shell pilotRole={activeRole} onExitPilot={handleExit} />
         </ErrorBoundary>
       </WouterRouter>
       <Toaster />

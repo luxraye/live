@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { SignInButton } from '@clerk/react';
+import { isValidClerkKey } from '@/lib/clerk-utils';
 import {
   ShieldAlert, ShieldCheck, Activity, Radio, Building2, Network,
   Lock, KeyRound, IdCard, LogIn, Link2, Database, HeartPulse,
@@ -172,6 +174,41 @@ export default function Landing({ onLogin }: { onLogin: (roleName: string) => vo
                 <p style={{ margin: 0, fontSize: 11, color: '#8899a6' }}>Ministry of Health & NBTS Credentials</p>
               </div>
             </div>
+
+            {isValidClerkKey(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY) && (
+              <div style={{ marginBottom: 20 }}>
+                <SignInButton mode="modal">
+                  <button
+                    type="button"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: 8,
+                      background: 'linear-gradient(90deg, #39d6e5, #0ea5e9)',
+                      color: '#060912',
+                      border: 'none',
+                      fontWeight: 800,
+                      fontSize: 13,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      boxShadow: '0 4px 14px rgba(57,214,229,0.25)',
+                    }}
+                  >
+                    <Lock size={16} /> SIGN IN WITH CLERK ACCOUNT
+                  </button>
+                </SignInButton>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '16px 0 6px' }}>
+                  <div style={{ height: 1, flex: 1, background: '#1a2638' }} />
+                  <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8899a6' }}>
+                    or staff passcode
+                  </span>
+                  <div style={{ height: 1, flex: 1, background: '#1a2638' }} />
+                </div>
+              </div>
+            )}
 
             <div style={{ display: 'grid', gap: 14, marginBottom: 20 }}>
               <div>
