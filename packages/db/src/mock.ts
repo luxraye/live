@@ -104,6 +104,7 @@ export const MOCK_ARTICLES = [
     topic: 'preparation',
     read_time_minutes: 4,
     icon_name: 'heart',
+    is_published: true,
     published_at: new Date().toISOString(),
     body_markdown: '# Optimizing Your Blood Health\nEating iron-rich foods (spinach, beans, lean meats) and staying hydrated 24 hours before donating ensures a smooth session.',
   },
@@ -114,8 +115,20 @@ export const MOCK_ARTICLES = [
     topic: 'blood_type',
     read_time_minutes: 5,
     icon_name: 'shield',
+    is_published: true,
     published_at: new Date().toISOString(),
     body_markdown: '# The Power of O- Negative\nO- blood can be safely given to recipients of any blood type during critical trauma resuscitation.',
+  },
+  {
+    id: 3,
+    title: 'Post-Donation Recovery: What to Expect in 24 Hours',
+    slug: 'post-donation-recovery',
+    topic: 'safety',
+    read_time_minutes: 3,
+    icon_name: 'activity',
+    is_published: true,
+    published_at: new Date().toISOString(),
+    body_markdown: '# Rapid Recovery Protocol\nAvoid heavy lifting for 5 hours, drink extra non-alcoholic fluids, and rest if feeling lightheaded.',
   },
 ];
 

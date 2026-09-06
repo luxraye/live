@@ -206,15 +206,15 @@ export async function autoSeedDatabase() {
     }
 
     // 4. Check if health_articles is empty; if so, seed from MOCK_ARTICLES
-    const articlesRes = await pool.query('SELECT COUNT(*) FROM health_articles');
+    const articlesRes = await pool.query('SELECT COUNT(*) FROM health_articles WHERE is_published = true');
     if (Number(articlesRes.rows[0]?.count ?? 0) === 0) {
       console.log('[DB] Seeding default health articles...');
       for (const a of MOCK_ARTICLES) {
         await pool.query(
           `INSERT INTO health_articles (title, slug, body_markdown, topic, read_time_minutes, icon_name, is_published, published_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-           ON CONFLICT (slug) DO NOTHING`,
-          [a.title, a.slug, a.body_markdown, a.topic, a.read_time_minutes, a.icon_name, a.is_published]
+           VALUES ($1, $2, $3, $4, $5, $6, true, NOW())
+           ON CONFLICT (slug) DO UPDATE SET is_published = true, published_at = COALESCE(health_articles.published_at, NOW())`,
+          [a.title, a.slug, a.body_markdown, a.topic, a.read_time_minutes, a.icon_name]
         );
       }
     }
@@ -230,6 +230,22 @@ export async function autoSeedDatabase() {
           [d.clerk_user_id, d.document_type, d.document_url, d.status]
         );
       }
+    }
+
+    // 6. Check if donor_profiles is empty; if so, seed baseline demo donor profiles
+    const donorsRes = await pool.query('SELECT COUNT(*) FROM donor_profiles');
+    if (Number(donorsRes.rows[0]?.count ?? 0) === 0) {
+      console.log('[DB] Seeding baseline donor profiles...');
+      await pool.query(`
+        INSERT INTO donor_profiles (clerk_user_id, first_name, last_name, blood_type, district, phone, location_enabled, verification_level)
+        VALUES 
+          ('user_donor_001', 'Kabo', 'Tau', 'O-', 'Gaborone', '+267 71 234 567', true, 1),
+          ('user_donor_002', 'Lesego', 'Moloi', 'A+', 'Francistown', '+267 72 345 678', true, 1),
+          ('user_donor_003', 'Tshepo', 'Dube', 'B+', 'Maun', '+267 73 456 789', true, 2),
+          ('user_donor_004', 'Neo', 'Kgosi', 'O+', 'Serowe', '+267 74 567 890', true, 4),
+          ('user_donor_005', 'Amantle', 'Montsho', 'AB-', 'Kanye', '+267 75 678 901', true, 3)
+        ON CONFLICT (clerk_user_id) DO NOTHING
+      `);
     }
   } catch (err: any) {
     console.warn('[DB] Auto-seed error (non-fatal):', err?.message || err);

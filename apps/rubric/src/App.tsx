@@ -240,8 +240,9 @@ function App() {
 }
 
 function Shell({ pilotRole, onExitPilot }: { pilotRole: string; onExitPilot: () => void }) {
-  const { signOut } = useSafeAuth();
+  const { isSignedIn } = useSafeAuth();
   const { user } = useSafeUser();
+  const hasClerk = isValidClerkKey(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
   const [location] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; kind: 'success' | 'error' } | null>(null);
@@ -293,8 +294,8 @@ function Shell({ pilotRole, onExitPilot }: { pilotRole: string; onExitPilot: () 
             const count = href === '/verification' ? pending : href === '/requests' ? openReqs : 0;
             return (
               <Link key={href} href={href} className={'nav-link ' + (active ? 'active' : '')} onClick={() => setMenuOpen(false)}>
-                <NavIcon size={16} />
-                <span>{label}</span>
+                <NavIcon size={16} className="nav-icon" />
+                <span className="nav-copy">{label}</span>
                 {count > 0 && (
                   <span className={'badge ' + (href === '/requests' ? 'badge-critical' : 'badge-warn')}>
                     {count.toString().padStart(2, '0')}
@@ -311,7 +312,7 @@ function Shell({ pilotRole, onExitPilot }: { pilotRole: string; onExitPilot: () 
               <div className="user-name" title={operatorName}>{operatorName}</div>
               <div className="user-role">Sovereign Clearance</div>
             </div>
-            <button onClick={onExitPilot} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} title="Exit or Switch Pilot Role">
+            <button onClick={onExitPilot} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} title={hasClerk && isSignedIn ? "Sign Out" : "Exit or Switch Pilot Role"}>
               <Settings2 size={14} color="#61798a" />
             </button>
           </div>
@@ -332,7 +333,7 @@ function Shell({ pilotRole, onExitPilot }: { pilotRole: string; onExitPilot: () 
               className="btn btn-sm"
               style={{ fontSize: 11, padding: '4px 10px', background: 'rgba(239,116,130,0.15)', color: '#ef7482', border: '1px solid rgba(239,116,130,0.4)', cursor: 'pointer' }}
             >
-              Exit Pilot
+              {hasClerk && isSignedIn ? 'Sign Out' : 'Exit Pilot'}
             </button>
             <div className="live-system"><i className="pulse" /> Live system</div>
             <div className="utc" data-testid="text-utc-clock">UTC {now.toISOString().slice(11, 19)}</div>
@@ -384,7 +385,7 @@ function OverviewPage({ notify }: { notify: Notify }) {
       />
       <div className="grid kpi-grid">
         <Kpi label="Active donors" value={stats ? stats.totalDonors.toLocaleString() : '0'} meta="Verified members" icon={Users} loading={isLoading} />
-        <Kpi label="Verified identities" value={stats ? String(stats.totalDonors - stats.pendingVerifications) : '0'} meta="Documents approved" icon={ShieldCheck} loading={isLoading} />
+        <Kpi label="Verified identities" value={stats ? String(Math.max(0, stats.totalDonors - stats.pendingVerifications)) : '0'} meta="Documents approved" icon={ShieldCheck} loading={isLoading} />
         <Kpi label="Open centres" value={stats ? String(stats.activeCentres) : '0'} meta="Active facilities" tone="warn" icon={Building2} loading={isLoading} />
         <Kpi label="Open requests" value={stats ? stats.openRequests.toString().padStart(2, '0') : '00'} meta={stats?.openRequests ? 'Require response' : 'None active'} tone={stats?.openRequests ? 'critical' : undefined} icon={Siren} loading={isLoading} />
       </div>
@@ -734,7 +735,7 @@ function AnalyticsPage({ notify }: { notify: Notify }) {
   const bars = [49, 64, 55, 71, 67, 82, 76, 91, 84, 96];
   const funnel = [
     { label: 'Registered donors', value: stats?.totalDonors ?? 0, w: 100 },
-    { label: 'Verified identities', value: (stats?.totalDonors ?? 0) - (stats?.pendingVerifications ?? 0), w: 76 },
+    { label: 'Verified identities', value: Math.max(0, (stats?.totalDonors ?? 0) - (stats?.pendingVerifications ?? 0)), w: 76 },
     { label: 'Network responses', value: stats?.totalResponses ?? 0, w: 52 },
     { label: 'Feedback submissions', value: stats?.feedbackSubmissions ?? 0, w: 28 },
   ];
