@@ -1,11 +1,12 @@
 import { Router, type IRouter } from 'express';
-import { getRequestAuth } from '../lib/auth';
+import { requireUser } from '../lib/auth';
 import { pool } from '@workspace/db';
 
 const router: IRouter = Router();
 
 // GET /api/clinical/orders — list hospital orders, optional ?hospital=, ?status=
 router.get('/orders', async (req, res) => {
+  if (!requireUser(req, res)) return;
   const { hospital, status } = req.query as Record<string, string | undefined>;
   let query = 'SELECT * FROM clinical_orders WHERE 1=1';
   const params: string[] = [];
@@ -21,7 +22,8 @@ router.get('/orders', async (req, res) => {
 
 // POST /api/clinical/orders — doctor creates blood request
 router.post('/orders', async (req, res) => {
-  const userId = getRequestAuth(req).userId;
+  const userId = requireUser(req, res);
+  if (!userId) return;
   const { hospitalName, wardRoom, patientIdentifier, bloodType, component, unitsRequested, urgency, indication } = req.body as Record<string, unknown>;
 
   if (!hospitalName || !wardRoom || !patientIdentifier || !bloodType) {
@@ -34,7 +36,7 @@ router.post('/orders', async (req, res) => {
     `INSERT INTO clinical_orders (order_number, hospital_name, ward_room, doctor_clerk_user_id, patient_identifier, blood_type, component, units_requested, urgency, indication)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
      RETURNING *`,
-    [orderNumber, hospitalName, wardRoom, userId ?? null, patientIdentifier, bloodType, component ?? 'prbc', unitsRequested ?? 1, urgency ?? 'elective', indication ?? null]
+    [orderNumber, hospitalName, wardRoom, userId, patientIdentifier, bloodType, component ?? 'prbc', unitsRequested ?? 1, urgency ?? 'elective', indication ?? null]
   );
 
   return res.status(201).json(result.rows[0]);
@@ -42,7 +44,8 @@ router.post('/orders', async (req, res) => {
 
 // POST /api/clinical/transfusions — bedside dual scan verification & sign-off
 router.post('/transfusions', async (req, res) => {
-  const userId = getRequestAuth(req).userId ?? 'clinician-demo';
+  const userId = requireUser(req, res);
+  if (!userId) return;
   const { orderId, unitBarcode, patientIdentifier, startedAt, completedAt, hasReaction, reactionDetails } = req.body as Record<string, unknown>;
 
   if (!unitBarcode || !patientIdentifier) {

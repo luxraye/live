@@ -1,11 +1,12 @@
 import { Router, type IRouter } from 'express';
-import { getRequestAuth } from '../lib/auth';
+import { requireUser } from '../lib/auth';
 import { pool } from '@workspace/db';
 
 const router: IRouter = Router();
 
 // GET /api/transit/manifests — list active dispatches, optional ?status=
 router.get('/manifests', async (req, res) => {
+  if (!requireUser(req, res)) return;
   const { status } = req.query as Record<string, string | undefined>;
   let query = 'SELECT * FROM transit_manifests WHERE 1=1';
   const params: string[] = [];
@@ -17,7 +18,8 @@ router.get('/manifests', async (req, res) => {
 
 // POST /api/transit/manifests — create a new dispatch crate
 router.post('/manifests', async (req, res) => {
-  const userId = getRequestAuth(req).userId;
+  const userId = requireUser(req, res);
+  if (!userId) return;
   const { originFacility, destinationFacility, driverName, unitBarcodes, coolerBoxId } = req.body as Record<string, unknown>;
 
   if (!originFacility || !destinationFacility) {
@@ -38,6 +40,7 @@ router.post('/manifests', async (req, res) => {
 
 // POST /api/transit/logs — record real-time temperature & GPS waypoint
 router.post('/logs', async (req, res) => {
+  if (!requireUser(req, res)) return;
   const { manifestId, temperatureCelsius, latitude, longitude, isAlertTriggered } = req.body as Record<string, unknown>;
 
   if (manifestId == null || temperatureCelsius == null) {
@@ -56,6 +59,7 @@ router.post('/logs', async (req, res) => {
 
 // PUT /api/transit/manifests/:id/status — update manifest status & delivery signature
 router.put('/manifests/:id/status', async (req, res) => {
+  if (!requireUser(req, res)) return;
   const { status, recipientSignature } = req.body as Record<string, unknown>;
 
   if (!status) {

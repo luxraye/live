@@ -18,8 +18,8 @@ export interface AnchorDonationResult {
   ledgerTimestamp?: string;
 }
 
-const FABRIC_NODE_URL = process.env.FABRIC_NODE_URL ?? 'http://localhost:3001';
-const FABRIC_GATEWAY_SECRET = process.env.FABRIC_GATEWAY_SECRET ?? 'dev-fabric-gateway-secret';
+const FABRIC_NODE_URL = process.env.FABRIC_NODE_URL;
+const FABRIC_GATEWAY_SECRET = process.env.FABRIC_GATEWAY_SECRET;
 
 /**
  * Deterministically pseudonymizes Clerk user IDs into 64-char SHA-256 hashes.
@@ -36,6 +36,10 @@ export function hashUserId(userId: string): string {
 export async function anchorDonationToFabric(
   params: AnchorDonationParams,
 ): Promise<AnchorDonationResult | null> {
+  if (!FABRIC_NODE_URL || !FABRIC_GATEWAY_SECRET) {
+    logger.error('Fabric request refused: FABRIC_NODE_URL and FABRIC_GATEWAY_SECRET are required');
+    return null;
+  }
   const donorHash = hashUserId(params.clerkUserId);
   const operatorHash = hashUserId(params.operatorId);
 

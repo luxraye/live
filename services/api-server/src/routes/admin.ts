@@ -11,6 +11,15 @@ function requireAdmin(req: Request, res: Response): string | null {
     res.status(401).json({ error: { code: "UNAUTHORIZED", message: "Sign in is required." } });
     return null;
   }
+  if (getRequestAuth(req).isPilot) {
+    res.status(403).json({ error: { code: "FORBIDDEN", message: "Administrator access is required." } });
+    return null;
+  }
+  const admins = (process.env.ADMIN_USER_IDS ?? "").split(",").map((id) => id.trim()).filter(Boolean);
+  if (!admins.includes(userId)) {
+    res.status(403).json({ error: { code: "FORBIDDEN", message: "Administrator access is required." } });
+    return null;
+  }
   return userId;
 }
 

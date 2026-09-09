@@ -11,6 +11,12 @@ import { pool } from '@workspace/db';
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
 
+// Express' Node stream typings and the DOM ReadableStream returned by fetch
+// use structurally similar but incompatible generic types.
+function toNodeReadable(body: ReadableStream<Uint8Array>): Readable {
+  return Readable.fromWeb(body as unknown as Parameters<typeof Readable.fromWeb>[0]);
+}
+
 function hasAuthenticatedSession(req: Request): boolean {
   return Boolean(getAuth(req).userId);
 }
@@ -89,9 +95,7 @@ router.get(
       response.headers.forEach((value, key) => res.setHeader(key, value));
 
       if (response.body) {
-        const nodeStream = Readable.fromWeb(
-          response.body as ReadableStream<Uint8Array>,
-        );
+        const nodeStream = toNodeReadable(response.body as ReadableStream<Uint8Array>);
         nodeStream.pipe(res);
       } else {
         res.end();
@@ -137,9 +141,7 @@ router.get('/storage/objects/*path', async (req: Request, res: Response) => {
     response.headers.forEach((value, key) => res.setHeader(key, value));
 
     if (response.body) {
-      const nodeStream = Readable.fromWeb(
-        response.body as ReadableStream<Uint8Array>,
-      );
+      const nodeStream = toNodeReadable(response.body as ReadableStream<Uint8Array>);
       nodeStream.pipe(res);
     } else {
       res.end();

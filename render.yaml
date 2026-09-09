@@ -31,7 +31,9 @@ services:
       - key: FABRIC_GATEWAY_SECRET
         sync: false
       - key: CORS_ORIGIN
-        value: "*"
+        value: "https://bloodchain.life,https://www.bloodchain.life,https://rubric.bloodchain.life,https://bloodchain-api-i9et.onrender.com"
+      - key: ADMIN_USER_IDS
+        sync: false
 
   # ─── 2. HYPERLEDGER FABRIC GATEWAY SERVICE ───────────────────────────────
   - type: web

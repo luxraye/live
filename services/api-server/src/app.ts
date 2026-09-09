@@ -7,6 +7,23 @@ import { clerkMiddleware } from "@clerk/express";
 
 const app: Express = express();
 
+const isProduction = process.env.NODE_ENV === 'production';
+const requiredProductionConfig = [
+  'CLERK_SECRET_KEY', 'CLERK_PUBLISHABLE_KEY', 'ADMIN_USER_IDS',
+  'CORS_ORIGIN', 'DATABASE_URL', 'FABRIC_NODE_URL', 'FABRIC_GATEWAY_SECRET',
+];
+if (isProduction) {
+  const missing = requiredProductionConfig.filter((key) => !process.env[key]?.trim());
+  if (missing.length) throw new Error(`Missing required production configuration: ${missing.join(', ')}`);
+  if (process.env.PILOT_AUTH_ENABLED === 'true') throw new Error('PILOT_AUTH_ENABLED cannot be enabled in production.');
+}
+const corsOrigins = (process.env.CORS_ORIGIN ?? '')
+  .split(',').map((origin) => origin.trim()).filter(Boolean);
+if (isProduction && corsOrigins.includes('*')) throw new Error('Wildcard CORS_ORIGIN is not permitted in production.');
+const allowedCorsOrigins = corsOrigins.length
+  ? corsOrigins
+  : ['http://localhost:3000', 'http://localhost:5173'];
+
 app.use(
   pinoHttp({
     logger,
@@ -29,7 +46,7 @@ app.use(
 
 app.use(
   cors({
-    origin: true,
+    origin: allowedCorsOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
@@ -49,18 +66,6 @@ if (rawClerkPk) {
   const cleanKey = match ? match[1] : rawClerkPk.replace(/^["']|["']$/g, '').trim();
   app.use(clerkMiddleware({ publishableKey: cleanKey }));
 }
-
-// Universal pilot fallback — ensures pilot presets and unauthenticated requests work gracefully
-app.use((req, _res, next) => {
-  const currentAuth = (req as any).auth;
-  if (!currentAuth || !currentAuth.userId) {
-    const bearer = req.headers.authorization?.replace(/^Bearer\s+/i, '');
-    (req as any).auth = {
-      userId: bearer || 'dev-pilot-user',
-    };
-  }
-  next();
-});
 
 // Dual mounting: supports both /api/path and direct /path across all frontend apps
 app.use("/api", router);

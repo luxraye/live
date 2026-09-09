@@ -30,10 +30,6 @@ export function useApi() {
         token = null;
       }
     }
-    if (!token) {
-      token = 'dev-pilot-donor';
-    }
-
     const base = getBaseUrl().replace(/\/$/, '');
     const cleanPath = path.startsWith('/api') ? path : `/api${path}`;
     const url = `${base}${cleanPath}`;
@@ -42,7 +38,7 @@ export function useApi() {
       ...options,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options?.headers,
       },
     });
