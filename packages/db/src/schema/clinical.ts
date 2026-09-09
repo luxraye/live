@@ -3,6 +3,7 @@ import { bigint, boolean, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg
 export const clinicalOrders = pgTable('clinical_orders', {
   id: bigint('id', { mode: 'number' }).primaryKey().generatedByDefaultAsIdentity(),
   orderNumber: text('order_number').notNull().unique(), // e.g. ORD-2026-0042
+  idempotencyKey: text('idempotency_key').unique(),
   hospitalName: text('hospital_name').notNull(),
   wardRoom: text('ward_room').notNull(),
   doctorClerkUserId: text('doctor_clerk_user_id'),
@@ -20,6 +21,7 @@ export const clinicalOrders = pgTable('clinical_orders', {
 export const transfusionLogs = pgTable('transfusion_logs', {
   id: bigint('id', { mode: 'number' }).primaryKey().generatedByDefaultAsIdentity(),
   orderId: bigint('order_id', { mode: 'number' }),
+  idempotencyKey: text('idempotency_key').unique(),
   unitBarcode: text('unit_barcode').notNull(),
   patientIdentifier: text('patient_identifier').notNull(),
   clinicianClerkUserId: text('clinician_clerk_user_id').notNull(),

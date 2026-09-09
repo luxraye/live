@@ -3,6 +3,7 @@ import { bigint, doublePrecision, jsonb, pgTable, text, timestamp } from 'drizzl
 export const transitManifests = pgTable('transit_manifests', {
   id: bigint('id', { mode: 'number' }).primaryKey().generatedByDefaultAsIdentity(),
   manifestNumber: text('manifest_number').notNull().unique(), // e.g. TRN-2026-8812
+  idempotencyKey: text('idempotency_key').unique(),
   originFacility: text('origin_facility').notNull(),
   destinationFacility: text('destination_facility').notNull(),
   courierClerkUserId: text('courier_clerk_user_id'),
@@ -19,6 +20,7 @@ export const transitManifests = pgTable('transit_manifests', {
 export const transitTelemetry = pgTable('transit_telemetry', {
   id: bigint('id', { mode: 'number' }).primaryKey().generatedByDefaultAsIdentity(),
   manifestId: bigint('manifest_id', { mode: 'number' }).notNull(),
+  eventId: text('event_id').unique(),
   temperatureCelsius: doublePrecision('temperature_celsius').notNull(),
   latitude: doublePrecision('latitude'),
   longitude: doublePrecision('longitude'),
