@@ -67,10 +67,9 @@ def check_ollama():
     except Exception:
         return False
 
-def query_llm(model: str, prompt: str, system_prompt: str = "", api_key: str = None):
+def query_llm(provider: str, model: str, prompt: str, system_prompt: str = "", api_key: str = None):
     try:
-        # If standard Ollama model and Ollama is online
-        if model.startswith("ollama/") or (not "/" in model and check_ollama()):
+        if provider == "Local Ollama":
             ollama_model = model.replace("ollama/", "")
             payload = {
                 "model": ollama_model,
@@ -78,22 +77,40 @@ def query_llm(model: str, prompt: str, system_prompt: str = "", api_key: str = N
                 "system": system_prompt,
                 "stream": False
             }
-            r = requests.post("http://localhost:11434/api/generate", json=payload, timeout=60)
-            if r.status_code == 200:
-                return r.json().get("response", "")
-            return f"Error from Ollama: HTTP {r.status_code}"
+            try:
+                r = requests.post("http://localhost:11434/api/generate", json=payload, timeout=60)
+                if r.status_code == 200:
+                    return r.json().get("response", "")
+                return f"Error from Ollama: HTTP {r.status_code} - {r.text}"
+            except requests.exceptions.ConnectionError:
+                return (
+                    "⚠️ **Local Ollama is offline or not running on this server.**\n\n"
+                    "- If you are running this dashboard **locally on your PC**, ensure Ollama is running (`ollama serve`).\n"
+                    "- If you are accessing this dashboard **on Render (Cloud)**, select **Groq (Cloud Fast/Free)** or **OpenRouter** in the left sidebar and enter your API key."
+                )
 
-        # Otherwise route through LiteLLM (supports Groq, OpenRouter, OpenAI, Anthropic, DeepSeek)
+        # Cloud LiteLLM Routing
         import litellm
+        import os
         messages = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": prompt})
-        
+
+        resolved_key = api_key
+        if not resolved_key:
+            if "groq" in model.lower():
+                resolved_key = os.environ.get("GROQ_API_KEY")
+            elif "openrouter" in model.lower():
+                resolved_key = os.environ.get("OPENROUTER_API_KEY")
+
+        if not resolved_key and provider != "Local Ollama":
+            return f"⚠️ Please enter your **{provider} API key** in the sidebar on the left to use cloud inference."
+
         kwargs = {"model": model, "messages": messages, "timeout": 60}
-        if api_key:
-            kwargs["api_key"] = api_key
-            
+        if resolved_key:
+            kwargs["api_key"] = resolved_key
+
         response = litellm.completion(**kwargs)
         return response.choices[0].message.content
     except Exception as e:
@@ -138,6 +155,9 @@ if nav_choice == "💬 Agent Chat & Task Delegation":
             model_name = st.selectbox("LLM Model", ["groq/llama-3.3-70b-versatile", "groq/qwen-2.5-coder-32b", "groq/mixtral-8x7b-32768"])
         elif provider == "OpenRouter (Cloud)":
             model_name = st.selectbox("LLM Model", ["openrouter/meta-llama/llama-3.3-70b-instruct", "openrouter/anthropic/claude-3.5-sonnet", "openrouter/deepseek/deepseek-chat"])
+        else:
+            model_name = st.text_input("Model ID (e.g. openai/gpt-4o, deepseek/deepseek-chat):", value="openai/gpt-4o-mini")
+
     with col2:
         if "messages" not in st.session_state:
             st.session_state.messages = []
@@ -155,7 +175,7 @@ if nav_choice == "💬 Agent Chat & Task Delegation":
             system_instruction = f"You are the Bloodchain AI {agent_role}. You execute tasks diligently and request approval for external or mutating operations."
             with st.chat_message("assistant"):
                 with st.spinner(f"Generating response using {model_name}..."):
-                    response = query_llm(model_name, user_input, system_instruction, api_key=cloud_api_key)
+                    response = query_llm(provider, model_name, user_input, system_instruction, api_key=cloud_api_key)
                     st.markdown(response)
                     st.session_state.messages.append({"role": "assistant", "content": response})
 
