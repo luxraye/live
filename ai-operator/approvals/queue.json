@@ -1,0 +1,36 @@
+[
+  {
+    "id": "APP-001",
+    "created_at": "2026-09-25T17:00:00Z",
+    "agent": "outreach",
+    "category": "EMAIL_OUTREACH",
+    "risk": "medium",
+    "title": "Outreach Draft for Botswana Ministry of Health",
+    "summary": "Introduction of Bloodchain cold chain tracking capabilities",
+    "proposed_action": "Send introductory email template to stakeholder contact",
+    "target_tool": "gmail_api",
+    "status": "pending",
+    "approved": false,
+    "edited_instructions": "",
+    "executed_at": null,
+    "result": null,
+    "source_link": ""
+  },
+  {
+    "id": "APP-002",
+    "created_at": "2026-09-25T17:05:00Z",
+    "agent": "coder",
+    "category": "PULL_REQUEST",
+    "risk": "high",
+    "title": "Propose Fabric Node Retry Handler PR",
+    "summary": "Automatic reconnection retry logic on network timeouts",
+    "proposed_action": "Open pull request from branch fix/fabric-retry against main",
+    "target_tool": "github_cli",
+    "status": "approved",
+    "approved": true,
+    "edited_instructions": "",
+    "executed_at": "2026-09-25T18:04:34.380844",
+    "result": null,
+    "source_link": "https://github.com/luxraye/live"
+  }
+]

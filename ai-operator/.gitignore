@@ -1,0 +1,7 @@
+.env
+.venv/
+logs/
+memory/chroma/
+__pycache__/
+*.pyc
+node_modules/

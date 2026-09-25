@@ -171,3 +171,35 @@ services:
     envVars:
       - key: EXPO_PUBLIC_API_BASE_URL
         value: "https://bloodchain-api-i9et.onrender.com"
+
+  # ─── 10. AI OPERATOR COMMAND CENTER ───────────────────────────────────────
+  - type: web
+    name: bloodchain-ai-operator
+    runtime: docker
+    dockerfilePath: ./ai-operator/Dockerfile
+    dockerContext: ./ai-operator
+    plan: free
+    envVars:
+      - key: PORT
+        value: "8501"
+      - key: APPROVAL_SHEET_ID
+        value: "1lzSZwAGfBsHlRORcw8vE8Ql38BSF_g1RTtnIbp2Y7w4"
+      - key: CRM_SHEET_ID
+        value: "1AO6eThWxmzqI7VB0I1Nh7y3f5-51TGQZ-TBdWMvUeNI"
+      - key: RESEARCH_SHEET_ID
+        value: "1ggJXubPaHJGfx6vMeXL2sf4SUvgafjvZVRBgoxcQcfM"
+      - key: CONTENT_SHEET_ID
+        value: "1gyUIWHD5FuUz3LSWVO8nF-Nh1uavcw7wWwjENdPZWkM"
+      - key: REQUIRE_APPROVAL_EMAIL
+        value: "true"
+      - key: REQUIRE_APPROVAL_CALENDAR
+        value: "true"
+      - key: REQUIRE_APPROVAL_DEPLOY
+        value: "true"
+      - key: REQUIRE_APPROVAL_MERGE
+        value: "true"
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+

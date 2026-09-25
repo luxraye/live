@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # 1. AI Operator Command Center
+  operator-dashboard:
+    build: .
+    container_name: bloodchain-ai-operator
+    restart: always
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    environment:
+      - PORT=8501
+    volumes:
+      - ./memory:/app/memory
+      - ./approvals:/app/approvals
+      - ./logs:/app/logs
+
+  # 2. n8n Automation Engine (WhatsApp, Gmail, Webhooks)
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: bloodchain-n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=UTC
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  n8n_data:
