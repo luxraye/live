@@ -68,7 +68,9 @@ def check_ollama():
         return False
 
 def query_llm(provider: str, model: str, prompt: str, system_prompt: str = "", api_key: str = None):
+    import os
     try:
+        # 1. Local Ollama
         if provider == "Local Ollama":
             ollama_model = model.replace("ollama/", "")
             payload = {
@@ -89,30 +91,69 @@ def query_llm(provider: str, model: str, prompt: str, system_prompt: str = "", a
                     "- If you are accessing this dashboard **on Render (Cloud)**, select **Groq (Cloud Fast/Free)** or **OpenRouter** in the left sidebar and enter your API key."
                 )
 
-        # Cloud LiteLLM Routing
-        import litellm
-        import os
+        # Resolve API Key
+        resolved_key = (api_key or "").strip()
+        if not resolved_key:
+            if provider.startswith("Groq"):
+                resolved_key = os.environ.get("GROQ_API_KEY", "").strip()
+            elif provider.startswith("OpenRouter"):
+                resolved_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
+
+        if not resolved_key:
+            return f"⚠️ Please enter your **{provider} API key** in the sidebar on the left."
+
         messages = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": prompt})
 
-        resolved_key = api_key
-        if not resolved_key:
-            if "groq" in model.lower():
-                resolved_key = os.environ.get("GROQ_API_KEY")
-            elif "openrouter" in model.lower():
-                resolved_key = os.environ.get("OPENROUTER_API_KEY")
+        # 2. Direct Groq API Call
+        if provider.startswith("Groq"):
+            clean_model = model.replace("groq/", "").strip()
+            if not clean_model:
+                clean_model = "llama-3.3-70b-versatile"
+            headers = {
+                "Authorization": f"Bearer {resolved_key}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": clean_model,
+                "messages": messages,
+                "temperature": 0.7
+            }
+            r = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=60)
+            if r.status_code == 200:
+                data = r.json()
+                return data["choices"][0]["message"]["content"]
+            else:
+                return f"Groq API Error (HTTP {r.status_code}): {r.text}"
 
-        if not resolved_key and provider != "Local Ollama":
-            return f"⚠️ Please enter your **{provider} API key** in the sidebar on the left to use cloud inference."
+        # 3. Direct OpenRouter API Call
+        elif provider.startswith("OpenRouter"):
+            clean_model = model.replace("openrouter/", "").strip()
+            headers = {
+                "Authorization": f"Bearer {resolved_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://bloodchain.life",
+                "X-Title": "Bloodchain AI Operator"
+            }
+            payload = {
+                "model": clean_model,
+                "messages": messages
+            }
+            r = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=60)
+            if r.status_code == 200:
+                data = r.json()
+                return data["choices"][0]["message"]["content"]
+            else:
+                return f"OpenRouter API Error (HTTP {r.status_code}): {r.text}"
 
-        kwargs = {"model": model, "messages": messages, "timeout": 60}
-        if resolved_key:
-            kwargs["api_key"] = resolved_key
-
+        # 4. LiteLLM Fallback for custom endpoints
+        import litellm
+        kwargs = {"model": model, "messages": messages, "timeout": 60, "api_key": resolved_key}
         response = litellm.completion(**kwargs)
         return response.choices[0].message.content
+
     except Exception as e:
         return f"Inference error ({model}): {e}"
 
@@ -126,10 +167,10 @@ nav_choice = st.sidebar.radio(
 # LLM Backend & status in sidebar
 ollama_online = check_ollama()
 st.sidebar.subheader("🤖 Model Provider")
-provider = st.sidebar.selectbox("Inference Engine", ["Local Ollama", "Groq (Cloud Fast/Free)", "OpenRouter (Cloud)", "Custom Cloud API"])
+provider = st.sidebar.selectbox("Inference Engine", ["Groq (Cloud Fast/Free)", "Local Ollama", "OpenRouter (Cloud)", "Custom Cloud API"])
 cloud_api_key = ""
 if provider != "Local Ollama":
-    cloud_api_key = st.sidebar.text_input(f"{provider} API Key:", type="password")
+    cloud_api_key = st.sidebar.text_input(f"{provider} API Key:", type="password", help="Paste your API key here")
 
 if ollama_online:
     st.sidebar.success("🟢 Local Ollama: Online")
@@ -147,25 +188,27 @@ if nav_choice == "💬 Agent Chat & Task Delegation":
             "Select Agent Role",
             ["Commander (Planning & Prioritization)", "Code Engineer (Repo & PRs)", "Researcher (Data & Policy)", "Outreach & Comms (Email/WhatsApp)", "Compliance & Security"]
         )
-        if provider == "Local Ollama":
-            model_name = st.selectbox("LLM Model", ["qwen2.5-coder:1.5b", "llama3.1", "custom"])
-            if model_name == "custom":
-                model_name = st.text_input("Enter model tag:", value="qwen2.5-coder")
-        elif provider == "Groq (Cloud Fast/Free)":
+        if provider == "Groq (Cloud Fast/Free)":
             groq_choice = st.selectbox("LLM Model", [
-                "groq/llama-3.1-8b-instant",
-                "groq/llama3-70b-8192",
-                "groq/deepseek-r1-distill-llama-70b",
-                "groq/gemma2-9b-it",
-                "groq/mixtral-8x7b-32768",
+                "llama-3.3-70b-versatile",
+                "llama-3.1-8b-instant",
+                "llama3-70b-8192",
+                "llama3-8b-8192",
+                "mixtral-8x7b-32768",
+                "deepseek-r1-distill-llama-70b",
+                "gemma2-9b-it",
                 "custom"
             ])
             if groq_choice == "custom":
-                model_name = "groq/" + st.text_input("Enter Groq model ID:", value="llama-3.1-8b-instant")
+                model_name = st.text_input("Enter Groq model ID:", value="llama-3.3-70b-versatile")
             else:
                 model_name = groq_choice
+        elif provider == "Local Ollama":
+            model_name = st.selectbox("LLM Model", ["qwen2.5-coder:1.5b", "llama3.1", "custom"])
+            if model_name == "custom":
+                model_name = st.text_input("Enter model tag:", value="qwen2.5-coder")
         elif provider == "OpenRouter (Cloud)":
-            model_name = st.selectbox("LLM Model", ["openrouter/meta-llama/llama-3.3-70b-instruct", "openrouter/anthropic/claude-3.5-sonnet", "openrouter/deepseek/deepseek-chat"])
+            model_name = st.selectbox("LLM Model", ["meta-llama/llama-3.3-70b-instruct", "anthropic/claude-3.5-sonnet", "deepseek/deepseek-chat"])
         else:
             model_name = st.text_input("Model ID (e.g. openai/gpt-4o, deepseek/deepseek-chat):", value="openai/gpt-4o-mini")
 
