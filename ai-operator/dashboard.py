@@ -152,7 +152,18 @@ if nav_choice == "💬 Agent Chat & Task Delegation":
             if model_name == "custom":
                 model_name = st.text_input("Enter model tag:", value="qwen2.5-coder")
         elif provider == "Groq (Cloud Fast/Free)":
-            model_name = st.selectbox("LLM Model", ["groq/llama-3.3-70b-versatile", "groq/qwen-2.5-coder-32b", "groq/mixtral-8x7b-32768"])
+            groq_choice = st.selectbox("LLM Model", [
+                "groq/llama-3.1-8b-instant",
+                "groq/llama3-70b-8192",
+                "groq/deepseek-r1-distill-llama-70b",
+                "groq/gemma2-9b-it",
+                "groq/mixtral-8x7b-32768",
+                "custom"
+            ])
+            if groq_choice == "custom":
+                model_name = "groq/" + st.text_input("Enter Groq model ID:", value="llama-3.1-8b-instant")
+            else:
+                model_name = groq_choice
         elif provider == "OpenRouter (Cloud)":
             model_name = st.selectbox("LLM Model", ["openrouter/meta-llama/llama-3.3-70b-instruct", "openrouter/anthropic/claude-3.5-sonnet", "openrouter/deepseek/deepseek-chat"])
         else:
