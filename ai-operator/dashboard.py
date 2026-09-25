@@ -157,6 +157,23 @@ def query_llm(provider: str, model: str, prompt: str, system_prompt: str = "", a
     except Exception as e:
         return f"Inference error ({model}): {e}"
 
+def get_groq_models(api_key: str):
+    fallback = ["llama3-8b-8192", "llama3-70b-8192", "mixtral-8x7b-32768", "gemma2-9b-it"]
+    key = (api_key or "").strip() or os.environ.get("GROQ_API_KEY", "").strip()
+    if not key:
+        return fallback
+    try:
+        headers = {"Authorization": f"Bearer {key}"}
+        r = requests.get("https://api.groq.com/openai/v1/models", headers=headers, timeout=4)
+        if r.status_code == 200:
+            data = r.json().get("data", [])
+            models = [m["id"] for m in data if "whisper" not in m["id"].lower() and "guard" not in m["id"].lower() and "distil" not in m["id"].lower()]
+            if models:
+                return models
+    except Exception:
+        pass
+    return fallback
+
 # Sidebar
 st.sidebar.title("🩸 Operator Controls")
 nav_choice = st.sidebar.radio(
@@ -189,18 +206,10 @@ if nav_choice == "💬 Agent Chat & Task Delegation":
             ["Commander (Planning & Prioritization)", "Code Engineer (Repo & PRs)", "Researcher (Data & Policy)", "Outreach & Comms (Email/WhatsApp)", "Compliance & Security"]
         )
         if provider == "Groq (Cloud Fast/Free)":
-            groq_choice = st.selectbox("LLM Model", [
-                "llama-3.3-70b-versatile",
-                "llama-3.1-8b-instant",
-                "llama3-70b-8192",
-                "llama3-8b-8192",
-                "mixtral-8x7b-32768",
-                "deepseek-r1-distill-llama-70b",
-                "gemma2-9b-it",
-                "custom"
-            ])
+            groq_models = get_groq_models(cloud_api_key)
+            groq_choice = st.selectbox("LLM Model", groq_models + ["custom"])
             if groq_choice == "custom":
-                model_name = st.text_input("Enter Groq model ID:", value="llama-3.3-70b-versatile")
+                model_name = st.text_input("Enter Groq model ID:", value="llama3-8b-8192")
             else:
                 model_name = groq_choice
         elif provider == "Local Ollama":
