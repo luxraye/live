@@ -54,4 +54,14 @@ router.post("/documents", async (req, res) => {
   return res.status(201).json(result.rows[0]);
 });
 
+router.get("/me/donations", async (req, res) => {
+  const userId = authenticatedUserId(req);
+  if (!userId) return res.status(401).json({ error: { code: "UNAUTHORIZED", message: "Sign in is required." } });
+  const result = await pool.query(
+    "SELECT * FROM donor_donations WHERE clerk_user_id = $1 ORDER BY donated_at DESC",
+    [userId]
+  );
+  return res.json(result.rows);
+});
+
 export default router;

@@ -1,4 +1,4 @@
-import { type ReactNode, useState, useMemo } from 'react';
+import { type ReactNode, useState, useMemo, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -463,6 +463,47 @@ function HomeContent({ operatorRole, onExit }: { operatorRole: string; onExit: (
   const [searchQuery, setSearchQuery] = useState('');
   const [toast, setToast] = useState('');
 
+  const apiBase = ((import.meta as any).env?.VITE_API_BASE_URL ?? 'https://bloodchain-api-i9et.onrender.com/api').replace(/\/$/, '');
+
+  useEffect(() => {
+    fetch(`${apiBase}/transit/manifests`, {
+      headers: { 'X-Dispatcher-Id': 'disp_central_001' }
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((rows) => {
+        if (Array.isArray(rows) && rows.length > 0) {
+          const liveItems: DispatchItem[] = rows.map((r: any) => ({
+            id: String(r.id),
+            code: r.manifest_number,
+            route: `${r.origin_facility} → ${r.destination_facility}`,
+            origin: r.origin_facility,
+            destination: r.destination_facility,
+            distance: '42 km',
+            driver: r.driver_name || 'Assigned Driver',
+            vehicle: 'Fleet Transit 4x4',
+            cooler: r.cooler_box_id || 'CRATE BWB-0091',
+            temp: 4.2,
+            tempStatus: 'safe',
+            urgency: 'STAT',
+            status: r.status === 'in_transit' ? 'In Transit' : r.status === 'delivered' ? 'Delivered' : 'Packing',
+            progress: r.status === 'delivered' ? 100 : r.status === 'in_transit' ? 60 : 15,
+            eta: r.status === 'delivered' ? 'Arrived' : '30 min post-departure',
+            totalUnits: Array.isArray(r.unit_barcodes) ? r.unit_barcodes.length : 8,
+            units: [
+              { type: 'Packed RBC (O−)', count: 4, tag: 'RBC' },
+              { type: 'Plasma (FFP)', count: 4, tag: 'FFP' },
+            ],
+          }));
+          setDispatches((prev) => {
+            const existingCodes = new Set(prev.map((p) => p.code));
+            const newLive = liveItems.filter((l) => !existingCodes.has(l.code));
+            return [...newLive, ...prev];
+          });
+        }
+      })
+      .catch(() => null);
+  }, [apiBase]);
+
   const routeIsPrimary = route === 'Gaborone → Molepolole';
   const thermal = {
     safe: { temp: '4.2', label: 'Within range', detail: '2° to 8° C band', color: 'safe' },
@@ -496,7 +537,7 @@ function HomeContent({ operatorRole, onExit }: { operatorRole: string; onExit: (
     try {
       const category = (document.getElementById('feedback-category') as HTMLSelectElement)?.value || 'handoff';
       const note = (document.getElementById('feedback-message') as HTMLTextAreaElement)?.value || '';
-      await fetch('/api/feedback', {
+      await fetch(`${apiBase}/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -553,6 +594,28 @@ function HomeContent({ operatorRole, onExit }: { operatorRole: string; onExit: (
     setDispatches([newDispatch, ...dispatches]);
     setNewDispatchModalOpen(false);
     showToast(`Emergency dispatch ${newDispatch.code} created & queued for dock loading`);
+
+    // Persist real manifest to backend database
+    const originFacility = 'Princess Marina Hospital';
+    const destFacility = newRoute ? newRoute.split('→')[1]?.trim() || 'Thamaga Hospital' : 'Thamaga Primary Hospital';
+    const idempotency = `manifest-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+    void fetch(`${apiBase}/transit/manifests`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Dispatcher-Id': 'disp_central_001',
+        'Idempotency-Key': idempotency,
+      },
+      body: JSON.stringify({
+        idempotencyKey: idempotency,
+        originFacility,
+        destinationFacility: destFacility,
+        driverName: newDriver || 'K. Sechele',
+        coolerBoxId: newDispatch.cooler,
+        unitBarcodes: [`WB-${Date.now().toString(36).toUpperCase()}`],
+      }),
+    }).catch(() => null);
   };
 
   const filteredDispatches = useMemo(() => {

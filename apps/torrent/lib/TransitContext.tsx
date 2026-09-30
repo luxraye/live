@@ -128,6 +128,32 @@ export function TransitProvider({ children }: { children: React.ReactNode }) {
         // A corrupt local cache should not block a driver from operating.
       }
     });
+
+    // Auto-flush queued feedback when network is reachable
+    AsyncStorage.getItem('torrent-transit-feedback-queue').then(async (queuedRaw) => {
+      if (!queuedRaw) return;
+      try {
+        const queued = JSON.parse(queuedRaw);
+        if (queued?.payload) {
+          const baseUrl = (
+            process.env.EXPO_PUBLIC_API_BASE_URL ||
+            process.env.VITE_API_BASE_URL ||
+            'https://bloodchain-api-i9et.onrender.com/api'
+          ).replace(/\/$/, '');
+          const res = await fetch(`${baseUrl}/feedback`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(queued.payload),
+          });
+          if (res.ok) {
+            await AsyncStorage.removeItem('torrent-transit-feedback-queue');
+            setPendingFeedback((count) => Math.max(0, count - 1));
+          }
+        }
+      } catch {
+        // Will retry on next startup/sync
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -175,6 +201,29 @@ export function TransitProvider({ children }: { children: React.ReactNode }) {
       },
       ...current,
     ]);
+
+    if (coords) {
+      const baseUrl = (
+        process.env.EXPO_PUBLIC_API_BASE_URL ||
+        process.env.VITE_API_BASE_URL ||
+        'https://bloodchain-api-i9et.onrender.com/api'
+      ).replace(/\/$/, '');
+      void fetch(`${baseUrl}/transit/logs`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Courier-Id': 'courier_pmh_001',
+          'Event-Id': `evt-${Date.now()}`,
+        },
+        body: JSON.stringify({
+          manifestId: 1,
+          temperatureCelsius: temperature,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+        }),
+      }).catch(() => null);
+    }
+
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     return Boolean(coords);
   };

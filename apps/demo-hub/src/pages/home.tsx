@@ -13,40 +13,35 @@ interface NationalStatsData {
 }
 
 function useGetNationalStats() {
-  const [data, setData] = useState<NationalStatsData>({
-    totalUnitsInStock: 2480,
-    unitsCollectedToday: 142,
-    facilitiesOnline: 12,
-    inventoryByBloodType: {
-      'O-': 48,
-      'O+': 892,
-      'A-': 94,
-      'A+': 680,
-      'B-': 32,
-      'B+': 520,
-      'AB-': 18,
-      'AB+': 196,
-    },
-    activeAlerts: 2,
-  });
-  const [isLoading, setIsLoading] = useState(false);
+  const [data, setData] = useState<NationalStatsData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
 
   useEffect(() => {
+    setIsLoading(true);
     const apiBase = ((import.meta as any).env?.VITE_API_BASE_URL ?? 'http://localhost:5000/api').replace(/\/$/, '');
     fetch(`${apiBase}/stats/overview`)
       .then((res) => (res.ok ? res.json() : null))
       .then((resData) => {
         if (resData) {
-          setData((prev) => ({
-            ...prev,
-            totalUnitsInStock: resData.totalDonors ? resData.totalDonors * 2 : prev.totalUnitsInStock,
-            facilitiesOnline: resData.activeCentres ?? prev.facilitiesOnline,
-          }));
+          setData({
+            totalUnitsInStock: typeof resData.totalUnitsInStock === 'number' ? resData.totalUnitsInStock : (resData.totalDonors || 0),
+            unitsCollectedToday: typeof resData.unitsCollectedToday === 'number' ? resData.unitsCollectedToday : 0,
+            facilitiesOnline: typeof resData.facilitiesOnline === 'number' ? resData.facilitiesOnline : (resData.activeCentres || 0),
+            inventoryByBloodType: resData.inventoryByBloodType || {
+              'O-': 0, 'O+': 0, 'A-': 0, 'A+': 0, 'B-': 0, 'B+': 0, 'AB-': 0, 'AB+': 0,
+            },
+            activeAlerts: typeof resData.activeAlerts === 'number' ? resData.activeAlerts : (resData.openRequests || 0),
+          });
+        } else {
+          setIsError(true);
         }
       })
       .catch(() => {
-        // Keep default telemetry
+        setIsError(true);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   }, []);
 
@@ -360,7 +355,22 @@ function ContactForm() {
     setStatus('loading');
     
     try {
-      const res = await fetch("https://formsubmit.co/ajax/gnakedi@bloodchain.life", {
+      const apiBase = ((import.meta as any).env?.VITE_API_BASE_URL ?? 'http://localhost:5000/api').replace(/\/$/, '');
+      const backendPromise = fetch(`${apiBase}/feedback`, {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          platform: 'demo-hub-contact',
+          responses: {
+            name: form.name,
+            organization: form.org,
+            email: form.email,
+            message: form.message,
+          },
+        }),
+      }).catch(() => null);
+
+      const formSubmitPromise = fetch("https://formsubmit.co/ajax/gnakedi@bloodchain.life", {
         method: "POST",
         headers: { 
           'Content-Type': 'application/json',
@@ -374,9 +384,11 @@ function ContactForm() {
           message: form.message,
           _template: 'box'
         })
-      });
+      }).catch(() => null);
+
+      const [resBackend, resFormSubmit] = await Promise.all([backendPromise, formSubmitPromise]);
       
-      if (res.ok) {
+      if ((resBackend && resBackend.ok) || (resFormSubmit && resFormSubmit.ok)) {
         setStatus('success');
         setForm({ name: '', org: '', email: '', message: '' });
         setTimeout(() => setStatus('idle'), 5000);

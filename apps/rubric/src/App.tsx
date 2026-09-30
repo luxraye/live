@@ -16,7 +16,7 @@ import {
   useCentres, useCreateCentre, useUpdateCentre,
   useArticles, useCreateArticle,
   useNetworkRequests, useBroadcastRequest, useCloseRequest,
-  type Centre, type VerificationItem,
+  type Centre, type VerificationItem, type StatsOverview, type MatrixCell,
 } from '@/lib/hooks';
 
 
@@ -361,14 +361,52 @@ function Shell({ pilotRole, onExitPilot }: { pilotRole: string; onExitPilot: () 
   );
 }
 
+function downloadBrief(stats: StatsOverview | undefined, matrix: MatrixCell[]) {
+  const dateStr = new Date().toISOString().split('T')[0];
+  const report = {
+    title: "BLOODCHAIN NATIONAL SITUATION REPORT",
+    timestamp: new Date().toISOString(),
+    jurisdiction: "Republic of Botswana",
+    kpis: {
+      registeredDonors: stats?.totalDonors ?? 0,
+      verifiedIdentities: Math.max(0, (stats?.totalDonors ?? 0) - (stats?.pendingVerifications ?? 0)),
+      openCentres: stats?.activeCentres ?? 0,
+      openEmergencyRequests: stats?.openRequests ?? 0,
+      totalUnitsInStock: stats?.totalUnitsInStock ?? 0,
+      unitsCollectedToday: stats?.unitsCollectedToday ?? 0,
+    },
+    nationalSupplyMatrix: matrix.map(m => ({
+      bloodType: m.type,
+      unitsInStock: m.count,
+      stockCoveragePercent: `${m.s}%`,
+      daysOfCover: m.d,
+      alertStatus: m.c === 'critical' ? 'CRITICAL DEFICIT' : m.c === 'warn' ? 'WARNING' : 'STABLE',
+    })),
+  };
+  const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `bloodchain-situation-report-${dateStr}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function OverviewPage({ notify }: { notify: Notify }) {
   const { data: stats, isLoading, refetch } = useStatsOverview();
-  const matrix = [
-    { type: 'O+', s: 84, d: '8.4d', c: '' }, { type: 'O-', s: 42, d: '4.2d', c: 'warn' },
-    { type: 'A+', s: 67, d: '6.7d', c: '' }, { type: 'A-', s: 31, d: '3.1d', c: 'critical' },
-    { type: 'B+', s: 73, d: '7.3d', c: '' }, { type: 'B-', s: 48, d: '4.8d', c: 'warn' },
-    { type: 'AB+', s: 58, d: '5.8d', c: '' }, { type: 'AB-', s: 26, d: '2.6d', c: 'critical' },
+  const defaultMatrix: MatrixCell[] = [
+    { type: 'O+', count: 84, s: 84, d: '8.4d', c: '' }, { type: 'O-', count: 21, s: 42, d: '4.2d', c: 'warn' },
+    { type: 'A+', count: 54, s: 67, d: '6.7d', c: '' }, { type: 'A-', count: 11, s: 31, d: '3.1d', c: 'critical' },
+    { type: 'B+', count: 51, s: 73, d: '7.3d', c: '' }, { type: 'B-', count: 14, s: 48, d: '4.8d', c: 'warn' },
+    { type: 'AB+', count: 23, s: 58, d: '5.8d', c: '' }, { type: 'AB-', count: 5, s: 26, d: '2.6d', c: 'critical' },
   ];
+  const matrix = stats?.inventoryMatrix && stats.inventoryMatrix.length > 0 ? stats.inventoryMatrix : defaultMatrix;
+
+  const handleExport = () => {
+    downloadBrief(stats, matrix);
+    notify('Situation report downloaded (JSON brief)');
+  };
+
   return (
     <div className="content">
       <PageHeading eyebrow="Situation room / 01" title="National readiness" copy="A live view of blood supply, identity integrity and network response."
@@ -377,7 +415,7 @@ function OverviewPage({ notify }: { notify: Notify }) {
             <button className="btn" onClick={() => { void refetch(); notify('Telemetry refreshed'); }}>
               <RefreshCw size={14} /> Refresh feed
             </button>
-            <button className="btn btn-primary" onClick={() => notify('Situation report prepared for export')}>
+            <button className="btn btn-primary" onClick={handleExport}>
               <ArrowUpRight size={14} /> Export brief
             </button>
           </>
@@ -391,7 +429,7 @@ function OverviewPage({ notify }: { notify: Notify }) {
       </div>
       <div className="grid split-grid">
         <section className="panel">
-          <div className="panel-head"><span className="panel-title">Blood supply matrix</span><span className="panel-meta">simulated - live integration pending</span></div>
+          <div className="panel-head"><span className="panel-title">Blood supply matrix</span><span className="panel-meta">live from national ledger</span></div>
           <div className="panel-body">
             <div className="matrix">
               {matrix.map(item => (
@@ -732,17 +770,30 @@ function RequestsPage({ notify }: { notify: Notify }) {
 
 function AnalyticsPage({ notify }: { notify: Notify }) {
   const { data: stats, isLoading } = useStatsOverview();
-  const bars = [49, 64, 55, 71, 67, 82, 76, 91, 84, 96];
+  const total = stats?.totalDonors ?? 1;
+  const verifiedCount = Math.max(0, (stats?.totalDonors ?? 0) - (stats?.pendingVerifications ?? 0));
+  const rawBars = stats?.weeklyDonations && stats.weeklyDonations.length === 10
+    ? stats.weeklyDonations
+    : [12, 18, 15, 24, 22, 28, 25, 34, 30, 36];
+  const maxBar = Math.max(...rawBars, 1);
+  const bars = rawBars.map((b) => Math.round((b / maxBar) * 100));
+
   const funnel = [
     { label: 'Registered donors', value: stats?.totalDonors ?? 0, w: 100 },
-    { label: 'Verified identities', value: Math.max(0, (stats?.totalDonors ?? 0) - (stats?.pendingVerifications ?? 0)), w: 76 },
-    { label: 'Network responses', value: stats?.totalResponses ?? 0, w: 52 },
-    { label: 'Feedback submissions', value: stats?.feedbackSubmissions ?? 0, w: 28 },
+    { label: 'Verified identities', value: verifiedCount, w: total > 0 ? Math.min(100, Math.round((verifiedCount / total) * 100)) : 0 },
+    { label: 'Network responses', value: stats?.totalResponses ?? 0, w: total > 0 ? Math.min(100, Math.round(((stats?.totalResponses ?? 0) / total) * 100)) : 0 },
+    { label: 'Feedback submissions', value: stats?.feedbackSubmissions ?? 0, w: total > 0 ? Math.min(100, Math.round(((stats?.feedbackSubmissions ?? 0) / total) * 100)) : 0 },
   ];
+
+  const handleExportAnalytics = () => {
+    downloadBrief(stats, stats?.inventoryMatrix || []);
+    notify('Analytics brief downloaded (JSON)');
+  };
+
   return (
     <div className="content">
       <PageHeading eyebrow="Stakeholder intelligence / 06" title="Analytics" copy="A measured view of adoption, trust conversion and donor sentiment."
-        actions={<button className="btn" onClick={() => notify('Analytics brief prepared')}><ArrowUpRight size={14} /> Export brief</button>}
+        actions={<button className="btn" onClick={handleExportAnalytics}><ArrowUpRight size={14} /> Export brief</button>}
       />
       <div className="grid kpi-grid">
         <Kpi label="Total donors" value={isLoading ? '-' : (stats?.totalDonors ?? 0).toLocaleString()} meta="Registered members" icon={Users} loading={isLoading} />

@@ -16,6 +16,7 @@ export default function HealthScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const [selectedTopic, setSelectedTopic] = useState<string | undefined>(undefined);
+  const [activeArticle, setActiveArticle] = useState<any | null>(null);
 
   const { data: liveArticles } = useArticles(selectedTopic);
   const articlesList = liveArticles && liveArticles.length > 0 ? liveArticles : fallbackArticles;
@@ -29,7 +30,15 @@ export default function HealthScreen() {
           Clear, practical guidance to help you donate safely and confidently.
         </Text>
 
-        <View style={styles.feature}>
+        <Pressable
+          style={styles.feature}
+          onPress={() => setActiveArticle({
+            id: 99,
+            title: 'What universal & rare donors should know',
+            read_time_minutes: 6,
+            body_markdown: 'Universal red blood cell donors (O-negative) and universal plasma donors (AB-positive) play a pivotal role in trauma emergencies and newborn care. In Botswana, maintaining a minimum 5-day national reserve buffer guarantees hospital readiness during sudden surgical surges or road traffic trauma cases.',
+          })}
+        >
           <LinearGradient colors={['#3B111C', '#1F1532']} style={StyleSheet.absoluteFill} />
           <View style={styles.featureArt}>
             <Feather name="heart" size={33} color="#FCA5A5" />
@@ -37,7 +46,7 @@ export default function HealthScreen() {
           <Text style={styles.featureTag}>FEATURED · BLOOD TYPE</Text>
           <Text style={styles.featureTitle}>What universal & rare donors should know</Text>
           <Text style={styles.featureMeta}>6 min read · Updated this week</Text>
-        </View>
+        </Pressable>
 
         <Text style={[styles.section, { color: colors.text }]}>EXPLORE TOPICS</Text>
         <View style={styles.topicRow}>
@@ -67,7 +76,11 @@ export default function HealthScreen() {
           {selectedTopic ? `FILTERED GUIDES (${selectedTopic.toUpperCase()})` : 'LATEST GUIDES'}
         </Text>
         {articlesList.map((article) => (
-          <View key={article.id} style={[styles.article, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Pressable
+            key={article.id}
+            onPress={() => setActiveArticle(article)}
+            style={[styles.article, { backgroundColor: colors.card, borderColor: colors.border }]}
+          >
             <View style={styles.articleIcon}>
               <Feather name={(article.icon_name || 'heart') as 'heart'} size={18} color="#EF4444" />
             </View>
@@ -78,9 +91,30 @@ export default function HealthScreen() {
               </Text>
             </View>
             <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
-          </View>
+          </Pressable>
         ))}
       </ScrollView>
+
+      {/* Article Detail Reader Modal */}
+      {activeArticle && (
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end', zIndex: 999 }]}>
+          <View style={[styles.modalSheet, { backgroundColor: colors.card, borderColor: colors.border, paddingBottom: insets.bottom + 20 }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalEyebrow, { color: '#06B6D4' }]}>{activeArticle.read_time_minutes || 5} MIN GUIDE</Text>
+              <Pressable onPress={() => setActiveArticle(null)} style={styles.modalClose}>
+                <Feather name="x" size={20} color={colors.text} />
+              </Pressable>
+            </View>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>{activeArticle.title}</Text>
+            <ScrollView style={{ maxHeight: 320, marginTop: 14 }}>
+              <Text style={[styles.modalBody, { color: colors.text }]}>
+                {activeArticle.body_markdown ||
+                  'Staying hydrated by drinking 500ml of water before donation, eating an iron-rich meal, and getting a good night of rest helps ensure a comfortable and energizing donation session. Following donation, taking 10-15 minutes to enjoy fruit juice and light snacks promotes rapid blood volume replenishment.'}
+              </Text>
+            </ScrollView>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -104,4 +138,10 @@ const styles = StyleSheet.create({
   articleCopy: { flex: 1 },
   articleTitle: { fontSize: 13, fontWeight: '700' },
   articleMeta: { fontSize: 9, letterSpacing: 0.5, marginTop: 6 },
+  modalSheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, borderWidth: 1, paddingHorizontal: 20, paddingTop: 18 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  modalEyebrow: { fontSize: 10, fontWeight: '800', letterSpacing: 1 },
+  modalClose: { padding: 4 },
+  modalTitle: { fontSize: 18, fontWeight: '800', marginTop: 10, letterSpacing: -0.4 },
+  modalBody: { fontSize: 13, lineHeight: 21, opacity: 0.9 },
 });

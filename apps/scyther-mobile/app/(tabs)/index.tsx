@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
-import { useDonorProfile } from '@/hooks/useDonorProfile';
+import { DonorQrCode } from '@/components/DonorQrCode';
+import { useDonorProfile, useDonorDonations } from '@/hooks/useDonorProfile';
 import { useDonationRequests } from '@/hooks/useNetwork';
 import { useCentres } from '@/hooks/useCentres';
 
@@ -43,6 +44,7 @@ export default function HomeScreen() {
   const [saved, setSaved] = useState(false);
 
   const { data: profile } = useDonorProfile();
+  const { data: donations } = useDonorDonations();
   const { data: liveRequests } = useDonationRequests();
   const { data: liveCentres } = useCentres();
 
@@ -50,6 +52,13 @@ export default function HomeScreen() {
   const bloodType = profile?.blood_type || 'O−';
   const verificationLevel = profile?.verification_level ?? 1;
   const district = profile?.district ? `${profile.district.toUpperCase()} · BOTSWANA` : 'GABORONE · BOTSWANA';
+
+  const donationCount = donations ? donations.length : 0;
+  const lastDonation = donations && donations.length > 0
+    ? new Date(donations[0].donated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }).toUpperCase()
+    : (profile?.is_demo ? 'SAMPLE' : 'NONE');
+  const countDisplay = profile?.is_demo ? '04*' : donationCount.toString().padStart(2, '0');
+  const nextEligible = 'ELIGIBLE';
 
   // Format today's date
   const today = new Date().toLocaleDateString('en-US', {
@@ -101,7 +110,15 @@ export default function HomeScreen() {
           </View>
           <View style={styles.cardBottom}>
             <Text style={styles.district}>{district}</Text>
-            <View style={styles.qr}><View style={styles.qrInner}><Feather name="maximize" size={24} color="#F0F6FF" /></View></View>
+            <View style={styles.qr}>
+              <View style={styles.qrInner}>
+                <DonorQrCode
+                  value={`BLOODCHAIN:SCT:${profile?.id || 'DEMO'}:${bloodType}:${profile?.clerk_user_id || 'DEMO'}`}
+                  size={38}
+                  color="#F0F6FF"
+                />
+              </View>
+            </View>
           </View>
           <View style={styles.redStrip} />
         </Pressable>
@@ -132,8 +149,15 @@ export default function HomeScreen() {
         </Pressable>
 
         <View style={styles.statsRow}>
-          {[['04', 'DONATIONS', colors.text], ['14 MAR', 'LAST DONATION', colors.text], ['ELIGIBLE', 'NEXT DONATION', '#34D399']].map(([value, label, tint]) => (
-            <View key={label} style={[styles.stat, { backgroundColor: colors.card, borderColor: colors.border }]}><Text style={[styles.statValue, { color: tint }]}>{value}</Text><Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{label}</Text></View>
+          {[
+            [countDisplay, profile?.is_demo ? 'SAMPLE RECORD' : 'DONATIONS', colors.text],
+            [lastDonation, 'LAST DONATION', colors.text],
+            [nextEligible, 'NEXT DONATION', '#34D399']
+          ].map(([value, label, tint]) => (
+            <View key={label} style={[styles.stat, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.statValue, { color: tint }]}>{value}</Text>
+              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{label}</Text>
+            </View>
           ))}
         </View>
 

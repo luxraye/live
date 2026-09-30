@@ -162,14 +162,37 @@ export function VaultPage() {
 
 export function AuditPage() {
   const feedback = useSubmitFeedback();
+  const units = useGetUnits({ status: 'all' });
   const [rating, setRating] = useState(0);
   const [comparison, setComparison] = useState<FeedbackInputPaperComparison>('faster');
   const [note, setNote] = useState('');
   const [sent, setSent] = useState('');
   const submit = (e: FormEvent) => { e.preventDefault(); if (!rating) return; feedback.mutate({ data: { platform: 'crucible-lab', rating, paperComparison: comparison, note } }, { onSuccess: (result) => { setSent(`Feedback ${result.id} logged at ${fmtDate(result.submittedAt)}.`); setRating(0); setNote(''); }, onError: () => setSent('Feedback could not be logged. The workflow remains unchanged; retry when connected.') }); };
-  const events = [{ time: '14:28:41', title: 'Component released', detail: 'PRBC-240514-018 · verified by Lena Morris', tone: 'teal' }, { time: '14:21:06', title: 'Unit held for review', detail: 'WB-240514-022 · reactive HCV result', tone: 'red' }, { time: '14:12:33', title: 'Vault temperature checked', detail: 'Zone C · 4.1°C · within operating band', tone: 'blue' }, { time: '13:57:09', title: 'Shift handoff completed', detail: 'M. Chen → L. Morris · no open exceptions', tone: 'neutral' }];
+
+  const todayStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+  // Map real units into dynamic audit events
+  const liveEvents = (units.data || []).slice(0, 6).map((u) => {
+    const time = new Date(u.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    if (u.status === 'quarantine') {
+      return { time, title: 'Unit held in quarantine', detail: `${u.id} · Serology reaction detected`, tone: 'red' };
+    }
+    if (u.status === 'verified') {
+      return { time, title: 'Unit cleared & verified', detail: `${u.id} · Serology passed (${u.bloodGroup || 'ABO'})`, tone: 'teal' };
+    }
+    if (u.status === 'processed') {
+      return { time, title: 'Fractionation completed', detail: `${u.id} · Components released to vault`, tone: 'teal' };
+    }
+    return { time, title: 'Whole blood intake registered', detail: `${u.id} · ${u.collectionSite}`, tone: 'blue' };
+  });
+
+  const events = liveEvents.length > 0 ? liveEvents : [
+    { time: '14:28:41', title: 'Component released', detail: 'PRBC-BOTS-001 · verified by Duty Technologist', tone: 'teal' },
+    { time: '14:12:33', title: 'Vault temperature verified', detail: 'Zone A · 4.0°C · stable operating band', tone: 'blue' },
+  ];
+
   return <div className="animate-enter"><PageHeading eyebrow="Feedback & history" title="Audit trail" detail="A transparent record of workflow signals, operator feedback, and exceptions." action={<Badge tone="blue"><History className="mr-1 h-3 w-3" /> immutable log</Badge>} />
-    <div className="grid gap-4 lg:grid-cols-[1fr_390px]"><Panel title="Operational history" eyebrow="Today · 14 May 2024"><div className="divide-y divide-border">{events.map((event, i) => <div key={event.time} className="flex gap-4 px-5 py-4" data-testid={`row-audit-event-${i}`}><div className="flex flex-col items-center"><span className={`mt-1 h-2.5 w-2.5 rounded-full ${event.tone === 'red' ? 'bg-destructive' : event.tone === 'teal' ? 'bg-primary' : event.tone === 'blue' ? 'bg-[#5a91b6]' : 'bg-muted-foreground'}`} />{i < events.length - 1 && <span className="mt-2 h-full w-px bg-border" />}</div><div><div className="flex items-center gap-3"><span className="font-mono-ui text-[10px] text-muted-foreground">{event.time}</span><span className="text-sm font-bold">{event.title}</span></div><p className="mt-1 text-xs text-muted-foreground">{event.detail}</p></div></div>)}</div></Panel>
+    <div className="grid gap-4 lg:grid-cols-[1fr_390px]"><Panel title="Operational history" eyebrow={`Today · ${todayStr}`}><div className="divide-y divide-border">{events.map((event, i) => <div key={event.time + i} className="flex gap-4 px-5 py-4" data-testid={`row-audit-event-${i}`}><div className="flex flex-col items-center"><span className={`mt-1 h-2.5 w-2.5 rounded-full ${event.tone === 'red' ? 'bg-destructive' : event.tone === 'teal' ? 'bg-primary' : event.tone === 'blue' ? 'bg-[#5a91b6]' : 'bg-muted-foreground'}`} />{i < events.length - 1 && <span className="mt-2 h-full w-px bg-border" />}</div><div><div className="flex items-center gap-3"><span className="font-mono-ui text-[10px] text-muted-foreground">{event.time}</span><span className="text-sm font-bold">{event.title}</span></div><p className="mt-1 text-xs text-muted-foreground">{event.detail}</p></div></div>)}</div></Panel>
       <Panel title="Tell us how it feels" eyebrow="Workflow pilot"><form onSubmit={submit} className="space-y-5 p-5"><Field label="Overall rating"><div className="flex gap-2">{[1, 2, 3, 4, 5].map((n) => <button type="button" key={n} onClick={() => setRating(n)} className={`focus-ring flex h-10 w-10 items-center justify-center rounded-md border font-mono-ui text-sm font-bold transition ${rating >= n ? 'border-accent bg-accent text-accent-foreground' : 'border-border text-muted-foreground hover:border-accent'}`} data-testid={`button-rating-${n}`}>{n}</button>)}</div></Field><Field label="Compared with paper logs"><select className={inputClass} value={comparison} onChange={(e) => setComparison(e.target.value as FeedbackInputPaperComparison)} data-testid="select-paper-comparison"><option value="much-slower">Much slower</option><option value="slower">Slower</option><option value="same">About the same</option><option value="faster">Faster</option><option value="much-faster">Much faster</option></select></Field><Field label="Note (optional)"><textarea className={`${inputClass} h-24 resize-none py-2`} value={note} onChange={(e) => setNote(e.target.value)} placeholder="What would make the next handoff clearer?" data-testid="textarea-feedback-note" /></Field>{sent && <div className="rounded-md bg-primary/10 px-3 py-2 text-xs text-primary" data-testid="status-feedback">{sent}</div>}<Button className="w-full" disabled={!rating || feedback.isPending} type="submit" data-testid="button-submit-feedback">{feedback.isPending ? 'Logging…' : 'Submit feedback'} <ArrowRight className="h-4 w-4" /></Button></form></Panel></div>
     <div className="mt-4 grid gap-3 sm:grid-cols-3"><div className="rounded-lg border border-border bg-card p-4"><Gauge className="h-4 w-4 text-primary" /><div className="mt-4 font-mono-ui text-2xl font-bold">2.4</div><div className="mt-1 text-xs text-muted-foreground">Current protocol version</div></div><div className="rounded-lg border border-border bg-card p-4"><TrendingUp className="h-4 w-4 text-primary" /><div className="mt-4 font-mono-ui text-2xl font-bold">+18m</div><div className="mt-1 text-xs text-muted-foreground">Time saved this shift</div></div><div className="rounded-lg border border-border bg-card p-4"><Filter className="h-4 w-4 text-primary" /><div className="mt-4 font-mono-ui text-2xl font-bold">0</div><div className="mt-1 text-xs text-muted-foreground">Open audit exceptions</div></div></div>
   </div>;

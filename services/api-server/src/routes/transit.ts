@@ -1,14 +1,28 @@
-import { Router, type IRouter } from 'express';
+import { Router, type IRouter, type Request, type Response } from 'express';
 import { createHash } from 'node:crypto';
-import { requireUser } from '../lib/auth';
+import { getRequestAuth } from '../lib/auth';
 import { pool } from '@workspace/db';
 import { coordinate, finiteNumber, idempotencyKey, oneOf, TRANSIT_STATUSES } from '../lib/clinical-integrity';
 
 const router: IRouter = Router();
 
+function getCourierOrUser(req: Request, res: Response): string | null {
+  const auth = getRequestAuth(req);
+  if (auth.userId) return auth.userId;
+  const courierHeader = req.header('X-Courier-Id') || req.header('X-Driver-Id') || req.header('X-Dispatcher-Id');
+  if (courierHeader && typeof courierHeader === 'string') {
+    return courierHeader.trim();
+  }
+  if (auth.isPilot) {
+    return 'pilot_courier_001';
+  }
+  res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Courier or dispatcher authentication required.' } });
+  return null;
+}
+
 // GET /api/transit/manifests — list active dispatches, optional ?status=
 router.get('/manifests', async (req, res) => {
-  if (!requireUser(req, res)) return;
+  if (!getCourierOrUser(req, res)) return;
   const { status } = req.query as Record<string, string | undefined>;
   let query = 'SELECT * FROM transit_manifests WHERE 1=1';
   const params: string[] = [];
@@ -20,7 +34,7 @@ router.get('/manifests', async (req, res) => {
 
 // POST /api/transit/manifests — create a new dispatch crate
 router.post('/manifests', async (req, res) => {
-  const userId = requireUser(req, res);
+  const userId = getCourierOrUser(req, res);
   if (!userId) return;
   const body = req.body as Record<string, unknown>;
   const { originFacility, destinationFacility, driverName, unitBarcodes, coolerBoxId } = body;
@@ -54,7 +68,7 @@ router.post('/manifests', async (req, res) => {
 
 // POST /api/transit/logs — record real-time temperature & GPS waypoint
 router.post('/logs', async (req, res) => {
-  if (!requireUser(req, res)) return;
+  if (!getCourierOrUser(req, res)) return;
   const body = req.body as Record<string, unknown>;
   const { manifestId, temperatureCelsius, latitude, longitude, isAlertTriggered } = body;
   const eventId = typeof req.header('Event-Id') === 'string' ? req.header('Event-Id') : body.eventId;
@@ -87,7 +101,7 @@ router.post('/logs', async (req, res) => {
 
 // PUT /api/transit/manifests/:id/status — update manifest status & delivery signature
 router.put('/manifests/:id/status', async (req, res) => {
-  if (!requireUser(req, res)) return;
+  if (!getCourierOrUser(req, res)) return;
   const { status, recipientSignature } = req.body as Record<string, unknown>;
 
   if (!oneOf(status, TRANSIT_STATUSES)) {

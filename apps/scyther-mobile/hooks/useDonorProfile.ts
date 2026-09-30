@@ -58,3 +58,29 @@ export function useUpdateDonorProfile() {
     },
   });
 }
+
+export type DonorDonationRecord = {
+  id: number;
+  clerk_user_id: string;
+  centre_name: string | null;
+  donated_at: string;
+  verified: boolean;
+  tx_id: string | null;
+};
+
+export function useDonorDonations() {
+  const { apiFetch } = useApi();
+  return useQuery<DonorDonationRecord[]>({
+    queryKey: ['donor-donations'],
+    queryFn: async () => {
+      try {
+        const res = await apiFetch<DonorDonationRecord[]>('/donor/me/donations');
+        return res ?? [];
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
+

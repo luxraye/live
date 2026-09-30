@@ -11,6 +11,14 @@ import { apiGet, apiPost, apiPut } from './api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export type MatrixCell = {
+  type: string;
+  count: number;
+  s: number;
+  d: string;
+  c: string;
+};
+
 export type StatsOverview = {
   totalDonors: number;
   pendingVerifications: number;
@@ -19,6 +27,13 @@ export type StatsOverview = {
   totalResponses: number;
   publishedArticles: number;
   feedbackSubmissions: number;
+  totalUnitsInStock?: number;
+  unitsCollectedToday?: number;
+  facilitiesOnline?: number;
+  inventoryByBloodType?: Record<string, number>;
+  activeAlerts?: number;
+  inventoryMatrix?: MatrixCell[];
+  weeklyDonations?: number[];
 };
 
 export type VerificationItem = {
