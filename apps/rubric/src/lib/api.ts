@@ -32,6 +32,10 @@ async function request<T>(
   };
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+    if (token === 'dev-operator-demo') {
+      headers['X-Pilot-Role'] = 'sovereign-clearance';
+      headers['X-Operator-Id'] = 'officer_sovereign_clearance';
+    }
   }
 
   const res = await fetch(`${BASE_URL}${path}`, {

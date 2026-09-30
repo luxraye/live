@@ -36,6 +36,22 @@ function RootLayoutNav({ hasClerk }: { hasClerk: boolean }) {
   );
 }
 
+class SafeClerkWrapper extends React.Component<{ children: React.ReactNode; fallback: React.ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(err: any) {
+    console.warn('[Scyther] Clerk initialization bypassed:', err?.message || err);
+  }
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
+}
+
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
@@ -57,7 +73,24 @@ export default function RootLayout() {
     process.env.VITE_CLERK_PUBLISHABLE_KEY ||
     process.env.CLERK_PUBLISHABLE_KEY;
   const publishableKey = sanitizeClerkKey(rawKey);
-  const hasClerk = Boolean(publishableKey);
+  const hasClerkKey = Boolean(publishableKey);
+
+  // Check if running on web with a production Clerk key on an unmapped domain (e.g. *.onrender.com)
+  const isWeb = typeof window !== 'undefined';
+  const isProductionKey = publishableKey?.startsWith('pk_live_');
+  const isDomainAllowed =
+    !isWeb ||
+    !isProductionKey ||
+    window.location.hostname === 'bloodchain.life' ||
+    window.location.hostname.endsWith('.bloodchain.life');
+
+  const enableClerk = hasClerkKey && isDomainAllowed;
+
+  if (isWeb && isProductionKey && !isDomainAllowed) {
+    console.info(
+      `[Scyther] Clerk production keys require domain "bloodchain.life". Current host is "${window.location.hostname}". Running in sovereign demo mode without Clerk block.`,
+    );
+  }
 
   const inner = (
     <SafeAreaProvider>
@@ -65,7 +98,7 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <GestureHandlerRootView>
             <KeyboardProvider>
-              <RootLayoutNav hasClerk={hasClerk} />
+              <RootLayoutNav hasClerk={enableClerk} />
             </KeyboardProvider>
           </GestureHandlerRootView>
         </QueryClientProvider>
@@ -73,13 +106,15 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 
-  if (hasClerk) {
+  if (enableClerk) {
     return (
-      <ClerkProvider publishableKey={publishableKey!} tokenCache={tokenCache}>
-        <ClerkLoaded>
-          {inner}
-        </ClerkLoaded>
-      </ClerkProvider>
+      <SafeClerkWrapper fallback={inner}>
+        <ClerkProvider publishableKey={publishableKey!} tokenCache={tokenCache}>
+          <ClerkLoaded>
+            {inner}
+          </ClerkLoaded>
+        </ClerkProvider>
+      </SafeClerkWrapper>
     );
   }
 

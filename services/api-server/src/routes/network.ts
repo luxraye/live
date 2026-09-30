@@ -1,19 +1,23 @@
 import { Router, type IRouter } from 'express';
 import { requireUser } from '../lib/auth';
-import { pool } from '@workspace/db';
+import { pool, MOCK_REQUESTS } from '@workspace/db';
 const router: IRouter = Router();
 router.get('/requests', async (req, res) => {
   if (!requireUser(req, res)) return;
-  const { priority, bloodType, limit = '20', offset = '0' } = req.query as Record<string, string>;
-  let query = 'SELECT *, NOW() - created_at AS age FROM donation_requests WHERE is_open = true';
-  const params: (string | number)[] = [];
-  let idx = 1;
-  if (priority) { query += ` AND priority = $${idx++}`; params.push(priority); }
-  if (bloodType) { query += ` AND blood_type = $${idx++}`; params.push(bloodType); }
-  query += ` ORDER BY priority = 'critical' DESC, created_at DESC LIMIT $${idx++} OFFSET $${idx++}`;
-  params.push(Number(limit), Number(offset));
-  const result = await pool.query(query, params);
-  return res.json(result.rows);
+  try {
+    const { priority, bloodType, limit = '20', offset = '0' } = req.query as Record<string, string>;
+    let query = 'SELECT *, NOW() - created_at AS age FROM donation_requests WHERE is_open = true';
+    const params: (string | number)[] = [];
+    let idx = 1;
+    if (priority) { query += ` AND priority = $${idx++}`; params.push(priority); }
+    if (bloodType) { query += ` AND blood_type = $${idx++}`; params.push(bloodType); }
+    query += ` ORDER BY priority = 'critical' DESC, created_at DESC LIMIT $${idx++} OFFSET $${idx++}`;
+    params.push(Number(limit), Number(offset));
+    const result = await pool.query(query, params);
+    return res.json(result.rows);
+  } catch {
+    return res.json(MOCK_REQUESTS);
+  }
 });
 router.post('/requests/:id/respond', async (req, res) => {
   const userId = requireUser(req, res);

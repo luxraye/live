@@ -86,7 +86,20 @@ app.use(
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'Idempotency-Key', 'X-Clinician-Id'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+      'Idempotency-Key',
+      'X-Clinician-Id',
+      'X-Operator-Id',
+      'X-Pilot-Role',
+      'X-Courier-Id',
+      'X-Driver-Id',
+      'X-Dispatcher-Id',
+    ],
   }),
 );
 

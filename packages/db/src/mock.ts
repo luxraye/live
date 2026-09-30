@@ -174,6 +174,7 @@ export const MOCK_DOCS = [
     last_name: 'Tau',
     document_type: 'national_omang',
     document_url: 'https://images.unsplash.com/photo-1544717305-2782549b5136',
+    object_path: 'identities/omang_kabo_tau_2026.pdf',
     status: 'pending',
     verification_level: 1,
     created_at: new Date(Date.now() - 14400000).toISOString(),
@@ -185,6 +186,7 @@ export const MOCK_DOCS = [
     last_name: 'Moloi',
     document_type: 'donor_card',
     document_url: 'https://images.unsplash.com/photo-1544717305-2782549b5136',
+    object_path: 'identities/donor_card_lesego_moloi.pdf',
     status: 'pending',
     verification_level: 1,
     created_at: new Date(Date.now() - 28800000).toISOString(),
@@ -224,9 +226,29 @@ export class MockPool {
     if (s.includes('count(*) from feedback_responses')) {
       return { rows: [{ count: this.feedbackSubmissions.length + 42 }] };
     }
+    if (s.includes('count(*) from blood_units')) {
+      if (s.includes('collected_at >=')) {
+        return { rows: [{ count: 36 }] };
+      }
+      return { rows: [{ count: 248 }] };
+    }
+    if (s.includes('from blood_units') && s.includes('group by blood_type')) {
+      return {
+        rows: [
+          { blood_type: 'O+', count: 84 },
+          { blood_type: 'O-', count: 21 },
+          { blood_type: 'A+', count: 54 },
+          { blood_type: 'A-', count: 11 },
+          { blood_type: 'B+', count: 51 },
+          { blood_type: 'B-', count: 14 },
+          { blood_type: 'AB+', count: 23 },
+          { blood_type: 'AB-', count: 5 },
+        ],
+      };
+    }
     if (s.includes('sum(response_count)')) {
       const sum = this.dynamicRequests.reduce((acc, r) => acc + (r.response_count || 0), 0);
-      return { rows: [{ sum: sum + 120 }] };
+      return { rows: [{ sum: sum + 120, coalesce: sum + 120 }] };
     }
 
     // Centres
