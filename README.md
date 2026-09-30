@@ -1,4 +1,4 @@
-﻿# Bloodchain Sovereign Health Infrastructure
+# Bloodchain Sovereign Health Infrastructure
 
 National sovereign platform for blood supply telemetry, cryptographic donor provenance, and emergency shortage response for the Republic of Botswana (Ministry of Health).
 
@@ -27,7 +27,7 @@ live/
 
 ### 1. Install Dependencies
 `ash
-# In C:\Users\Taylith\live
+# In the repository root
 pnpm install
 `
 

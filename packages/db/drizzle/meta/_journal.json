@@ -8,6 +8,13 @@
       "when": 1787673779108,
       "tag": "0000_aspiring_sentinel",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787673779109,
+      "tag": "0001_clinical_integrity",
+      "breakpoints": true
     }
   ]
 }

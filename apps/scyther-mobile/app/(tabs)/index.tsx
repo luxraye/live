@@ -83,18 +83,20 @@ export default function HomeScreen() {
             <View style={styles.mark}><View style={styles.markDrop} /></View>
             <Text style={styles.wordmark}>SCYTHER</Text>
             <View style={styles.cardLevel}>
-              <View style={[styles.levelDot, { backgroundColor: verificationLevel >= 3 ? '#34D399' : '#F59E0B' }]} />
-              <Text style={[styles.levelText, { color: verificationLevel >= 3 ? '#A7F3D0' : '#FCD34D' }]}>LEVEL {verificationLevel}</Text>
+              <View style={[styles.levelDot, { backgroundColor: profile?.is_demo ? '#9CA3AF' : verificationLevel >= 3 ? '#34D399' : '#F59E0B' }]} />
+              <Text style={[styles.levelText, { color: profile?.is_demo ? '#D1D5DB' : verificationLevel >= 3 ? '#A7F3D0' : '#FCD34D' }]}>
+                {profile?.is_demo ? 'DEMO MODE' : `LEVEL ${verificationLevel}`}
+              </Text>
             </View>
           </View>
           <View style={styles.cardMiddle}>
             <View>
               <Text style={styles.cardName}>{donorName}</Text>
-              <Text style={styles.cardId}>{profile ? `SCT-${profile.id?.toString().padStart(4, '0') || '2748'}` : 'SCT-2748-09B'}</Text>
+              <Text style={styles.cardId}>{profile?.is_demo ? 'DEMO-PREVIEW' : profile ? `SCT-${profile.id?.toString().padStart(4, '0') || '2748'}` : 'SCT-2748-09B'}</Text>
             </View>
             <View style={styles.bloodBlock}>
               <Text style={styles.bloodType}>{bloodType}</Text>
-              <Text style={styles.selfReported}>{verificationLevel >= 3 ? 'VERIFIED' : 'SELF-REPORTED'}</Text>
+              <Text style={styles.selfReported}>{profile?.is_demo ? 'SAMPLE DATA' : verificationLevel >= 3 ? 'VERIFIED' : 'SELF-REPORTED'}</Text>
             </View>
           </View>
           <View style={styles.cardBottom}>
@@ -105,21 +107,28 @@ export default function HomeScreen() {
         </Pressable>
 
         <Pressable
-          style={[styles.verifyStrip, { backgroundColor: verificationLevel >= 3 ? '#06251F' : '#2A1806', borderColor: verificationLevel >= 3 ? '#075F4E' : '#78350F' }]}
+          style={[styles.verifyStrip, {
+            backgroundColor: profile?.is_demo ? '#1A1829' : verificationLevel >= 3 ? '#06251F' : '#2A1806',
+            borderColor: profile?.is_demo ? '#3730A3' : verificationLevel >= 3 ? '#075F4E' : '#78350F'
+          }]}
           onPress={() => router.push('/verification')}
         >
-          <View style={[styles.verifyIcon, { backgroundColor: verificationLevel >= 3 ? '#075F4E' : '#78350F' }]}>
-            <Feather name="shield" size={16} color={verificationLevel >= 3 ? '#34D399' : '#FCD34D'} />
+          <View style={[styles.verifyIcon, { backgroundColor: profile?.is_demo ? '#312E81' : verificationLevel >= 3 ? '#075F4E' : '#78350F' }]}>
+            <Feather
+              name={profile?.is_demo ? 'user' : 'shield'}
+              size={16}
+              color={profile?.is_demo ? '#C7D2FE' : verificationLevel >= 3 ? '#34D399' : '#FCD34D'}
+            />
           </View>
           <View style={styles.verifyCopy}>
-            <Text style={[styles.verifyTitle, { color: verificationLevel >= 3 ? '#A7F3D0' : '#FDE68A' }]}>
-              Verification Level {verificationLevel}
+            <Text style={[styles.verifyTitle, { color: profile?.is_demo ? '#E0E7FF' : verificationLevel >= 3 ? '#A7F3D0' : '#FDE68A' }]}>
+              {profile?.is_demo ? 'Demo Mode · Sample Record' : `Verification Level ${verificationLevel}`}
             </Text>
-            <Text style={[styles.verifySub, { color: verificationLevel >= 3 ? '#6EE7B7' : '#FCD34D' }]}>
-              {verificationLevel >= 3 ? 'Cleared donor · identity confirmed' : 'Tap to submit verification ID'}
+            <Text style={[styles.verifySub, { color: profile?.is_demo ? '#A5B4FC' : verificationLevel >= 3 ? '#6EE7B7' : '#FCD34D' }]}>
+              {profile?.is_demo ? 'Sign in or link Omang / National ID to verify' : verificationLevel >= 3 ? 'Cleared donor · identity confirmed' : 'Tap to submit verification ID'}
             </Text>
           </View>
-          <Feather name="chevron-right" size={18} color={verificationLevel >= 3 ? '#34D399' : '#FCD34D'} />
+          <Feather name="chevron-right" size={18} color={profile?.is_demo ? '#A5B4FC' : verificationLevel >= 3 ? '#34D399' : '#FCD34D'} />
         </Pressable>
 
         <View style={styles.statsRow}>

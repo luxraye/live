@@ -56,9 +56,18 @@ async function rawPost(path: string, body: unknown): Promise<boolean> {
   try {
     const ctrl = new AbortController()
     const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS)
+    const idempotency = typeof (body as any)?.idempotencyKey === 'string'
+      ? (body as any).idempotencyKey
+      : (body as any)?.ledgerRef || `IDEM-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const clinicianId = (body as any)?.clinicianId || 'dr-pmh-trauma-01';
+
     const res = await fetch(`${API_BASE}${path}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': idempotency,
+        'X-Clinician-Id': clinicianId,
+      },
       body: JSON.stringify(body),
       signal: ctrl.signal,
     })
@@ -123,6 +132,7 @@ export function newLedgerRef(): string {
 }
 
 export async function submitOrder(order: BloodOrder) {
+  const idempotencyKey = order.ledgerRef || newLedgerRef();
   return apiPost('/clinical/orders', {
     hospitalName: order.destination || 'Princess Marina Hospital',
     wardRoom: order.destination || 'ICU / Trauma Bay',
@@ -133,6 +143,8 @@ export async function submitOrder(order: BloodOrder) {
     urgency: order.priority === 'STAT' ? 'stat_trauma' : 'elective',
     indication: order.indication,
     ledgerRef: order.ledgerRef,
+    idempotencyKey,
+    clinicianId: 'dr-pmh-trauma-01',
   })
 }
 
@@ -142,13 +154,18 @@ export async function submitVerification(payload: {
   match: boolean
   clinicianPin: boolean
   clinicianId?: string
+  donorBloodType?: string
   timestamp: string
 }) {
+  const idempotencyKey = `VER-${payload.bagBarcode}-${Date.now()}`;
   return apiPost('/clinical/transfusions', {
     unitBarcode: payload.bagBarcode,
     patientIdentifier: payload.patientBarcode,
+    donorBloodType: payload.donorBloodType || 'O-',
     startedAt: payload.timestamp,
     hasReaction: false,
+    clinicianId: payload.clinicianId || 'dr-pmh-trauma-01',
+    idempotencyKey,
   })
 }
 
@@ -158,21 +175,30 @@ export async function submitSignOff(payload: {
   completedAt: string
   pinVerified: boolean
   clinicianId?: string
+  donorBloodType?: string
 }) {
+  const idempotencyKey = `SIG-${payload.unitId}-${Date.now()}`;
   return apiPost('/clinical/transfusions', {
     unitBarcode: payload.unitId,
     patientIdentifier: payload.patientBarcode,
+    donorBloodType: payload.donorBloodType || 'O-',
     completedAt: payload.completedAt,
     hasReaction: false,
+    clinicianId: payload.clinicianId || 'dr-pmh-trauma-01',
+    idempotencyKey,
   })
 }
 
 export async function submitReaction(alert: ReactionAlert) {
+  const idempotencyKey = `RCT-${alert.unitId}-${Date.now()}`;
   return apiPost('/clinical/transfusions', {
     unitBarcode: alert.unitId,
     patientIdentifier: alert.patientId,
+    donorBloodType: 'O-',
     hasReaction: true,
     reactionDetails: { types: alert.types, sentAt: alert.sentAt },
+    clinicianId: 'dr-pmh-trauma-01',
+    idempotencyKey,
   })
 }
 

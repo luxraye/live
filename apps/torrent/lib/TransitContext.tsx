@@ -189,6 +189,7 @@ export function TransitProvider({ children }: { children: React.ReactNode }) {
       },
       appVersion: '1.0.0-torrent',
     };
+    try {
       const baseUrl = (
         process.env.EXPO_PUBLIC_API_BASE_URL ||
         process.env.VITE_API_BASE_URL ||

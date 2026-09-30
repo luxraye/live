@@ -18,9 +18,10 @@ const queryClient = new QueryClient({
 
 import { isValidClerkKey, sanitizeClerkKey } from '@/lib/clerk-utils';
 
+const globalProcess = (globalThis as any).process;
 const rawClerkPk = (
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
-  (typeof process !== 'undefined' && process.env?.CLERK_PUBLISHABLE_KEY) ||
+  (typeof globalProcess !== 'undefined' && globalProcess.env?.CLERK_PUBLISHABLE_KEY) ||
   ''
 ) as string;
 

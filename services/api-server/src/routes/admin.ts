@@ -5,7 +5,7 @@ import { anchorDonationToFabric } from "../lib/fabric";
 
 const router: IRouter = Router();
 
-function requireAdmin(req: Request, res: Response): string | null {
+export function requireAdmin(req: Request, res: Response): string | null {
   const userId = getRequestAuth(req).userId;
   if (!userId) {
     res.status(401).json({ error: { code: "UNAUTHORIZED", message: "Sign in is required." } });
@@ -164,6 +164,15 @@ router.post("/donations/record", async (req, res) => {
     donatedAt: donationTimestamp,
     operatorId,
   });
+
+  if (fabricProof && fabricProof.success) {
+    await pool.query(
+      `UPDATE donor_donations SET tx_id = $1, verified = true, verified_at = NOW() WHERE id = $2`,
+      [txId, donationRow.id]
+    );
+    donationRow.tx_id = txId;
+    donationRow.verified = true;
+  }
 
   return res.status(201).json({
     donation: donationRow,

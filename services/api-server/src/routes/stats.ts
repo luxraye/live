@@ -14,16 +14,11 @@ router.get('/overview', async (req, res) => {
     pool.query('SELECT COUNT(*) FROM health_articles WHERE is_published = true'),
     pool.query('SELECT COUNT(*) FROM feedback_responses'),
   ]);
-  const rawDonors = Number(donors.rows[0]?.count ?? 0);
+  const totalDonors = Number(donors.rows[0]?.count ?? 0);
   const pendingCount = Number(pendingDocs.rows[0]?.count ?? 0);
-  // National situation room telemetry baseline (active Botswana blood donor registry)
-  const totalDonors = rawDonors > 0 ? (rawDonors >= 800 ? rawDonors : 842 + rawDonors) : 842;
-  const rawResponses = Number(totalResponses.rows[0]?.sum ?? 0);
-  const responseCount = rawResponses > 0 ? rawResponses : 128;
-  const rawArticles = Number(articles.rows[0]?.count ?? 0);
-  const articleCount = rawArticles > 0 ? rawArticles : 3;
-  const rawFeedback = Number(feedback.rows[0]?.count ?? 0);
-  const feedbackCount = rawFeedback > 0 ? rawFeedback : 42;
+  const responseCount = Number(totalResponses.rows[0]?.sum ?? 0);
+  const articleCount = Number(articles.rows[0]?.count ?? 0);
+  const feedbackCount = Number(feedback.rows[0]?.count ?? 0);
 
   return res.json({
     totalDonors,

@@ -1,4 +1,4 @@
-﻿import { getAuth } from '@clerk/express';
+import { getAuth } from '@clerk/express';
 import type { Request } from 'express';
 
 export interface RequestAuth {
@@ -17,9 +17,8 @@ export function getRequestAuth(req: Request): RequestAuth {
     }
   } catch { /* Clerk middleware may not be installed in development. */ }
   if (!userId) userId = (req as any).auth?.userId ?? null;
-  const isPilot = !userId && process.env.NODE_ENV !== 'production' &&
-    process.env.PILOT_AUTH_ENABLED === 'true';
-  return { userId: userId ?? (isPilot ? PILOT_USER_ID : null), isPilot };
+  const isPilot = Boolean((req as any).isPilotAuth);
+  return { userId, isPilot };
 }
 
 export function requireUser(req: Request, res: { status: (code: number) => { json: (body: unknown) => unknown } }): string | null {

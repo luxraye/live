@@ -9,6 +9,8 @@
 import 'dotenv/config';
 import cors from 'cors';
 import express from 'express';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { closeFabric, initFabric, modeReason, usingMockMode } from './fabric/connection.js';
 import { logger } from './logger.js';
 import { donationsRouter } from './routes/donations.js';
@@ -22,8 +24,15 @@ async function main(): Promise<void> {
 
   const app = express();
 
-  // Running behind Render / Replit proxies — trust X-Forwarded-For for req.ip.
-  app.set('trust proxy', true);
+  // Running behind Render / reverse proxy — trust 1 hop to prevent client IP spoofing
+  app.set('trust proxy', 1);
+
+  // Security headers: CSP, HSTS, X-Content-Type-Options, etc.
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
 
   app.use(express.json({ limit: '64kb' }));
 
@@ -36,8 +45,12 @@ async function main(): Promise<void> {
   app.use(
     cors({
       origin: (origin, callback) => {
-        // Allow non-browser clients (no Origin header) and allow-listed origins.
-        if (!origin || allowedOrigins.includes(origin)) {
+        // Allow non-browser clients (no Origin header), allow-listed origins, and Render deployments.
+        if (
+          !origin ||
+          allowedOrigins.includes(origin) ||
+          /^https:\/\/bloodchain-[a-z0-9-]+\.onrender\.com$/.test(origin)
+        ) {
           callback(null, true);
         } else {
           callback(null, false);
@@ -74,8 +87,17 @@ async function main(): Promise<void> {
     });
   });
 
+  // Rate limiting for public transparency endpoints (healthz is untouched)
+  const publicLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    limit: 60, // 60 requests per minute per IP
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    message: { error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too many requests, please slow down.' } },
+  });
+
   app.use('/fabric', donationsRouter);
-  app.use('/public', publicRouter);
+  app.use('/public', publicLimiter, publicRouter);
 
   // 404 handler
   app.use((_req, res) => {

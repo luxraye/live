@@ -305,6 +305,8 @@ elif nav_choice == "🧠 Memory & Knowledge Base":
                         st.info(f"**Document:** {d}\n\n*Metadata:* `{m}`")
                 else:
                     st.write("No matching documents found.")
+            except ImportError:
+                st.warning("⚠️ ChromaDB vector storage is currently disabled for security audit compliance (PYSEC-2026-311).")
             except Exception as e:
                 st.error(f"Error querying Chroma: {e}")
 
@@ -325,6 +327,8 @@ elif nav_choice == "🧠 Memory & Knowledge Base":
                         metadatas=[{"category": doc_category, "added_at": datetime.now().isoformat()}]
                     )
                     st.success(f"Saved '{doc_id}' to persistent Chroma memory!")
+                except ImportError:
+                    st.warning("⚠️ ChromaDB vector storage is currently disabled for security audit compliance.")
                 except Exception as e:
                     st.error(f"Error saving: {e}")
 

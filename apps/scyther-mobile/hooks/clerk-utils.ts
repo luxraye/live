@@ -19,11 +19,12 @@ export function isValidClerkKey(key?: string | null): boolean {
     while (base64.length % 4) {
       base64 += '=';
     }
+    const globalBuffer = (globalThis as any).Buffer;
     const decoded =
       typeof atob !== 'undefined'
         ? atob(base64)
-        : typeof Buffer !== 'undefined'
-        ? Buffer.from(base64, 'base64').toString('utf-8')
+        : typeof globalBuffer !== 'undefined'
+        ? globalBuffer.from(base64, 'base64').toString('utf-8')
         : '';
     return Boolean(decoded && (decoded.includes('.') || decoded.endsWith('$')));
   } catch {

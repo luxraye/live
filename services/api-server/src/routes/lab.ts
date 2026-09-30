@@ -168,10 +168,46 @@ const mockComponents: LabComponent[] = [
 
 const genId = (prefix: string) => `${prefix}-${Date.now().toString(36).toUpperCase()}`;
 
+async function syncInitialUnitsToDb() {
+  try {
+    for (const unit of mockUnits) {
+      await pool.query(
+        `INSERT INTO blood_units (bag_barcode, donor_hash, blood_type, component_type, volume_ml, status, is_reactive, viral_markers, collected_at, created_at, updated_at)
+         VALUES ($1, $2, $3, 'whole_blood', $4, $5, $6, $7, $8, $9, NOW())
+         ON CONFLICT (bag_barcode) DO NOTHING`,
+        [
+          unit.id,
+          unit.donorCode,
+          unit.bloodGroup || 'UNKNOWN',
+          unit.volumeMl,
+          unit.status,
+          unit.status === 'quarantine',
+          JSON.stringify(unit.screening),
+          unit.collectedAt,
+          unit.createdAt,
+        ]
+      );
+    }
+  } catch (err) {
+    // Graceful note: Database might not be connected or ready yet
+  }
+}
+void syncInitialUnitsToDb();
+
 // GET /dashboard & /api/dashboard
-router.get(['/dashboard', '/lab/dashboard'], (_req, res) => {
-  const quarantineCount = mockUnits.filter((u) => u.status === 'quarantine').length;
-  const expiringSoonCount = mockComponents.filter((c) => c.status === 'expiring').length;
+router.get(['/dashboard', '/lab/dashboard'], async (_req, res) => {
+  let quarantineCount = mockUnits.filter((u) => u.status === 'quarantine').length;
+  let expiringSoonCount = mockComponents.filter((c) => c.status === 'expiring').length;
+
+  try {
+    const qCountRes = await pool.query(`SELECT COUNT(*)::int AS count FROM blood_units WHERE status = 'quarantine' OR is_reactive = true`);
+    if (qCountRes.rows[0]) {
+      quarantineCount = Number(qCountRes.rows[0].count);
+    }
+  } catch {
+    // fallback to in-memory count
+  }
+
   return res.json({
     receivedToday: 128,
     processedToday: 96,
@@ -183,9 +219,49 @@ router.get(['/dashboard', '/lab/dashboard'], (_req, res) => {
 });
 
 // GET /units & /api/units
-router.get(['/units', '/lab/units'], (req, res) => {
+router.get(['/units', '/lab/units'], async (req, res) => {
   const { status, search } = req.query as { status?: string; search?: string };
-  let result = mockUnits;
+
+  let unitsList = mockUnits;
+
+  try {
+    const dbRes = await pool.query(
+      `SELECT bag_barcode, donor_hash, blood_type, component_type, volume_ml, status, vault_location, is_reactive, viral_markers, collected_at, expires_at, created_at
+       FROM blood_units
+       WHERE component_type = 'whole_blood'
+       ORDER BY created_at DESC
+       LIMIT 100`
+    );
+    if (dbRes.rows.length > 0) {
+      const dbUnits: LabUnit[] = dbRes.rows.map((row: any) => {
+        const existing = mockUnits.find((u) => u.id === row.bag_barcode);
+        if (existing) return existing;
+        const gate: ScreeningGate = row.status === 'quarantine' || row.is_reactive ? 'quarantine' : row.status === 'verified' || row.status === 'processed' || row.status === 'fractionated' ? 'passed' : 'awaiting';
+        return {
+          id: row.bag_barcode,
+          donorCode: row.donor_hash,
+          collectionSite: 'Princess Marina Blood Bank',
+          collectedAt: row.collected_at ? new Date(row.collected_at).toISOString() : new Date().toISOString(),
+          volumeMl: Number(row.volume_ml) || 450,
+          bloodGroup: row.blood_type && row.blood_type !== 'UNKNOWN' ? row.blood_type : null,
+          status: (row.status === 'fractionated' ? 'processed' : row.status) as UnitStatus,
+          screening: row.viral_markers && typeof row.viral_markers === 'object' ? row.viral_markers : makeScreening(gate),
+          createdAt: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
+        };
+      });
+
+      for (const m of mockUnits) {
+        if (!dbUnits.some((d) => d.id === m.id)) {
+          dbUnits.push(m);
+        }
+      }
+      unitsList = dbUnits;
+    }
+  } catch (err) {
+    // Database fallback
+  }
+
+  let result = unitsList;
   if (status && status !== 'all') {
     result = result.filter((u) => u.status === status);
   }
@@ -199,26 +275,47 @@ router.get(['/units', '/lab/units'], (req, res) => {
 });
 
 // POST /units & /api/units
-router.post(['/units', '/lab/units'], (req, res) => {
+router.post(['/units', '/lab/units'], async (req, res) => {
   const body = req.body as Partial<LabUnit>;
   const createdAt = new Date().toISOString();
   const unit: LabUnit = {
-    id: genId('WB'),
+    id: body.id || genId('WB'),
     donorCode: body.donorCode || 'DNR-' + Math.floor(10000 + Math.random() * 90000),
     collectionSite: body.collectionSite || 'Princess Marina Blood Bank',
     collectedAt: body.collectedAt || createdAt,
     volumeMl: Number(body.volumeMl) || 450,
-    bloodGroup: null,
-    status: 'pending',
-    screening: makeScreening(),
+    bloodGroup: body.bloodGroup || null,
+    status: (body.status as UnitStatus) || 'pending',
+    screening: body.screening || makeScreening(),
     createdAt,
   };
   mockUnits.unshift(unit);
+
+  try {
+    await pool.query(
+      `INSERT INTO blood_units (bag_barcode, donor_hash, blood_type, component_type, volume_ml, status, collected_at, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+       ON CONFLICT (bag_barcode) DO UPDATE SET status = EXCLUDED.status, blood_type = EXCLUDED.blood_type, updated_at = NOW()`,
+      [
+        unit.id,
+        unit.donorCode,
+        unit.bloodGroup || 'UNKNOWN',
+        'whole_blood',
+        unit.volumeMl,
+        unit.status,
+        unit.collectedAt,
+        unit.createdAt,
+      ]
+    );
+  } catch (err) {
+    console.warn('[lab] Warning: failed to persist blood unit to PostgreSQL:', err);
+  }
+
   return res.status(201).json(unit);
 });
 
 // POST /units/:id/screen & /api/units/:id/screen
-router.post(['/units/:id/screen', '/lab/units/:id/screen'], (req, res) => {
+router.post(['/units/:id/screen', '/lab/units/:id/screen'], async (req, res) => {
   const unit = mockUnits.find((u) => u.id === req.params.id);
   if (!unit) return res.status(404).json({ error: 'Unit not found' });
 
@@ -238,11 +335,29 @@ router.post(['/units/:id/screen', '/lab/units/:id/screen'], (req, res) => {
   };
   unit.bloodGroup = bloodGroup;
   unit.status = reactive ? 'quarantine' : 'verified';
+
+  try {
+    await pool.query(
+      `UPDATE blood_units
+       SET status = $1, blood_type = $2, is_reactive = $3, viral_markers = $4, updated_at = NOW()
+       WHERE bag_barcode = $5`,
+      [
+        unit.status,
+        unit.bloodGroup,
+        reactive,
+        JSON.stringify(unit.screening),
+        unit.id,
+      ]
+    );
+  } catch (err) {
+    console.warn('[lab] Warning: failed to update blood unit in PostgreSQL:', err);
+  }
+
   return res.json(unit);
 });
 
 // POST /units/:id/fractionate & /api/units/:id/fractionate
-router.post(['/units/:id/fractionate', '/lab/units/:id/fractionate'], (req, res) => {
+router.post(['/units/:id/fractionate', '/lab/units/:id/fractionate'], async (req, res) => {
   const unit = mockUnits.find((u) => u.id === req.params.id);
   if (!unit) return res.status(404).json({ error: 'Unit not found' });
   if (unit.status !== 'verified') {
@@ -287,6 +402,33 @@ router.post(['/units/:id/fractionate', '/lab/units/:id/fractionate'], (req, res)
   ];
   mockComponents.unshift(...created);
   unit.status = 'processed';
+
+  try {
+    await pool.query(
+      `UPDATE blood_units SET status = 'fractionated', updated_at = NOW() WHERE bag_barcode = $1`,
+      [unit.id]
+    );
+    for (const comp of created) {
+      await pool.query(
+        `INSERT INTO blood_units (bag_barcode, donor_hash, blood_type, component_type, volume_ml, status, vault_location, expires_at, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+         ON CONFLICT (bag_barcode) DO NOTHING`,
+        [
+          comp.id,
+          unit.donorCode,
+          comp.bloodGroup || 'UNKNOWN',
+          comp.type.toLowerCase(),
+          comp.volumeMl,
+          comp.status,
+          comp.shelf,
+          comp.expiresAt,
+        ]
+      );
+    }
+  } catch (err) {
+    console.warn('[lab] Warning: failed to record fractionated components in PostgreSQL:', err);
+  }
+
   return res.status(201).json(created);
 });
 

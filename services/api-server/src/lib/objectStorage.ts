@@ -111,7 +111,10 @@ export class ObjectStorageService {
     return new Response(webStream, { headers });
   }
 
-  async getObjectEntityUploadURL(): Promise<string> {
+  async getObjectEntityUploadURL(options?: {
+    contentType?: string;
+    maxSizeBytes?: number;
+  }): Promise<string> {
     const privateObjectDir = this.getPrivateObjectDir();
     if (!privateObjectDir) {
       throw new Error(
@@ -130,6 +133,8 @@ export class ObjectStorageService {
       objectName,
       method: 'PUT',
       ttlSec: 900,
+      contentType: options?.contentType,
+      maxSizeBytes: options?.maxSizeBytes,
     });
   }
 
@@ -237,40 +242,62 @@ async function signObjectURL({
   objectName,
   method,
   ttlSec,
+  contentType,
+  maxSizeBytes,
 }: {
   bucketName: string;
   objectName: string;
   method: 'GET' | 'PUT' | 'DELETE' | 'HEAD';
   ttlSec: number;
+  contentType?: string;
+  maxSizeBytes?: number;
 }): Promise<string> {
-  const request = {
+  const request: Record<string, unknown> = {
     bucket_name: bucketName,
     object_name: objectName,
     method,
     expires_at: new Date(Date.now() + ttlSec * 1000).toISOString(),
   };
-  const response = await fetch(
-    `${REPLIT_SIDECAR_ENDPOINT}/object-storage/signed-object-url`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+  if (contentType) request.content_type = contentType;
+  if (maxSizeBytes) request.max_size_bytes = maxSizeBytes;
+
+  try {
+    const response = await fetch(
+      `${REPLIT_SIDECAR_ENDPOINT}/object-storage/signed-object-url`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+        signal: AbortSignal.timeout(5_000),
       },
-      body: JSON.stringify(request),
-      signal: AbortSignal.timeout(30_000),
-    },
-  );
-  if (!response.ok) {
-    throw new Error(
-      `Failed to sign object URL, errorcode: ${response.status}, ` +
-        `make sure you're running on Replit`,
     );
+    if (response.ok) {
+      const payload = (await response.json()) as { signed_url?: unknown };
+      const signedURL = payload.signed_url;
+      if (typeof signedURL === 'string') {
+        return signedURL;
+      }
+    }
+  } catch {
+    // Replit sidecar unreachable; fallback to standard Google Cloud Storage SDK v4 signing
   }
 
-  const payload = (await response.json()) as { signed_url?: unknown };
-  const signedURL = payload.signed_url;
-  if (typeof signedURL !== 'string') {
-    throw new Error('Object storage returned an invalid signed URL');
-  }
+  // Google Cloud Storage SDK v4 signing with explicit size and content-type bounds
+  const bucket = objectStorageClient.bucket(bucketName);
+  const file = bucket.file(objectName);
+  const [signedURL] = await file.getSignedUrl({
+    version: 'v4',
+    action: method === 'PUT' ? 'write' : method === 'GET' ? 'read' : 'delete',
+    expires: Date.now() + ttlSec * 1000,
+    contentType: contentType || undefined,
+    extensionHeaders: maxSizeBytes
+      ? {
+          'x-goog-content-length-range': `0,${maxSizeBytes}`,
+        }
+      : undefined,
+  });
+
   return signedURL;
 }

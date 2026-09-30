@@ -14,6 +14,7 @@ export interface AnchorDonationParams {
 
 export interface AnchorDonationResult {
   success: boolean;
+  txId?: string;
   blockHeight?: string;
   ledgerTimestamp?: string;
 }
@@ -22,11 +23,12 @@ const FABRIC_NODE_URL = process.env.FABRIC_NODE_URL;
 const FABRIC_GATEWAY_SECRET = process.env.FABRIC_GATEWAY_SECRET;
 
 /**
- * Deterministically pseudonymizes Clerk user IDs into 64-char SHA-256 hashes.
- * Raw user IDs (PII) must never be sent to the blockchain ledger.
+ * Deterministically pseudonymizes Clerk user IDs into salted 64-char SHA-256 hashes.
+ * Salt prevents rainbow-table / re-identification attacks on the permanent public ledger.
  */
 export function hashUserId(userId: string): string {
-  return crypto.createHash('sha256').update(userId.trim()).digest('hex');
+  const salt = process.env.FABRIC_DONOR_SALT || 'bloodchain-sovereign-donor-salt-2026';
+  return crypto.createHash('sha256').update(`${salt}:${userId.trim()}`).digest('hex');
 }
 
 /**
@@ -70,12 +72,12 @@ export async function anchorDonationToFabric(
         { txId: params.txId, blockHeight: data.blockHeight, ledgerTimestamp: data.ledgerTimestamp },
         'Donation anchored to Hyperledger Fabric',
       );
-      return data;
+      return { ...data, txId: params.txId, success: true };
     }
 
     if (res.status === 409) {
       logger.warn({ txId: params.txId }, 'Donation txId already anchored on Fabric (duplicate)');
-      return { success: true };
+      return { success: true, txId: params.txId };
     }
 
     const err = await res.json().catch(() => ({ error: { message: 'Fabric request failed' } }));

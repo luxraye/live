@@ -1,6 +1,7 @@
 import { Readable } from 'stream';
 import { Router, type IRouter, type Request, type Response } from 'express';
 import { getAuth } from '@clerk/express';
+import rateLimit from 'express-rate-limit';
 
 import {
   ObjectNotFoundError,
@@ -10,6 +11,15 @@ import { pool } from '@workspace/db';
 
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
+
+// Rate limiter for presigned upload URLs (max 30 mint requests per 15 min per IP)
+const uploadUrlLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { error: 'Too many upload URL requests, please try again later.' },
+});
 
 // Express' Node stream typings and the DOM ReadableStream returned by fetch
 // use structurally similar but incompatible generic types.
@@ -31,6 +41,7 @@ function hasAuthenticatedSession(req: Request): boolean {
  */
 router.post(
   '/storage/uploads/request-url',
+  uploadUrlLimiter,
   async (req: Request, res: Response) => {
     if (!hasAuthenticatedSession(req)) {
       res.status(401).json({ error: 'Unauthorized' });
@@ -54,7 +65,10 @@ router.post(
       return;
     }
     try {
-      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL({
+        contentType,
+        maxSizeBytes: size,
+      });
       const objectPath =
         objectStorageService.normalizeObjectEntityPath(uploadURL);
       await pool.query(

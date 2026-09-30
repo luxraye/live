@@ -7,7 +7,7 @@ services:
     container_name: bloodchain-ai-operator
     restart: always
     ports:
-      - "8501:8501"
+      - "127.0.0.1:8501:8501"
     env_file:
       - .env
     environment:
@@ -23,9 +23,9 @@ services:
     container_name: bloodchain-n8n
     restart: always
     ports:
-      - "5678:5678"
+      - "127.0.0.1:5678:5678"
     environment:
-      - N8N_HOST=0.0.0.0
+      - N8N_HOST=127.0.0.1
       - N8N_PORT=5678
       - N8N_PROTOCOL=http
       - NODE_ENV=production

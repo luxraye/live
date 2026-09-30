@@ -31,7 +31,7 @@ services:
       - key: FABRIC_GATEWAY_SECRET
         sync: false
       - key: CORS_ORIGIN
-        value: "https://bloodchain.life,https://www.bloodchain.life,https://rubric.bloodchain.life,https://bloodchain-api-i9et.onrender.com"
+        value: "https://bloodchain.life,https://www.bloodchain.life,https://rubric.bloodchain.life,https://bloodchain-api-i9et.onrender.com,https://bloodchain-rubric.onrender.com,https://bloodchain-demo.onrender.com,https://bloodchain-aegis.onrender.com,https://bloodchain-crucible.onrender.com,https://bloodchain-torrent.onrender.com,https://bloodchain-torrent-desktop.onrender.com"
       - key: ADMIN_USER_IDS
         sync: false
 
@@ -50,7 +50,7 @@ services:
       - key: FABRIC_MOCK_MODE
         value: "true"
       - key: ALLOWED_ORIGINS
-        value: "https://bloodchain.life,https://www.bloodchain.life,https://rubric.bloodchain.life"
+        value: "https://bloodchain.life,https://www.bloodchain.life,https://rubric.bloodchain.life,https://bloodchain-rubric.onrender.com,https://bloodchain-demo.onrender.com,https://bloodchain-aegis.onrender.com,https://bloodchain-crucible.onrender.com,https://bloodchain-torrent.onrender.com"
       - key: FABRIC_GATEWAY_SECRET
         generateValue: true
       - key: FABRIC_PEER_ENDPOINT

@@ -8,6 +8,7 @@ export const donorDonations = pgTable('donor_donations', {
   donatedAt: timestamp('donated_at', { withTimezone: true }).notNull(),
   verified: boolean('verified').notNull().default(false),
   verifiedAt: timestamp('verified_at', { withTimezone: true }),
+  txId: text('tx_id'),
   notes: text('notes'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });

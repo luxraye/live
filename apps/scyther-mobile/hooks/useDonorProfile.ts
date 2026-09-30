@@ -13,20 +13,22 @@ export interface DonorProfile {
   verification_level: number;
   created_at: string;
   updated_at: string;
+  is_demo?: boolean;
 }
 
 export const DEMO_DONOR_PROFILE: DonorProfile = {
   id: 1,
   clerk_user_id: 'user_donor_001',
-  first_name: 'Kabo',
+  first_name: 'Kabo (Demo)',
   last_name: 'Tau',
   blood_type: 'O-',
   district: 'Gaborone Central',
   phone: '+267 72 100 240',
   location_enabled: true,
-  verification_level: 2,
+  verification_level: 0,
   created_at: new Date(Date.now() - 90 * 86400000).toISOString(),
   updated_at: new Date().toISOString(),
+  is_demo: true,
 };
 
 export function useDonorProfile() {
