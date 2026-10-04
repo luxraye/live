@@ -137,6 +137,7 @@ export default function SignUpScreen() {
                 >
                   <Text style={styles.demoButtonText}>⚡ EXPLORE DONOR PILOT DEMO</Text>
                 </Pressable>
+
                 {isSubmitting && (
                   <>
                     <Text style={[styles.securityNotice, { color: colors.mutedForeground }]}>Complete the security check below to continue.</Text>

@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -42,11 +43,23 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [saved, setSaved] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const { data: profile } = useDonorProfile();
-  const { data: donations } = useDonorDonations();
-  const { data: liveRequests } = useDonationRequests();
-  const { data: liveCentres } = useCentres();
+  const { data: profile, refetch: refetchProfile } = useDonorProfile();
+  const { data: donations, refetch: refetchDonations } = useDonorDonations();
+  const { data: liveRequests, refetch: refetchRequests } = useDonationRequests();
+  const { data: liveCentres, refetch: refetchCentres } = useCentres();
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.allSettled([
+      refetchProfile(),
+      refetchDonations(),
+      refetchRequests(),
+      refetchCentres(),
+    ]);
+    setRefreshing(false);
+  };
 
   const donorName = profile?.first_name ? `${profile.first_name} ${profile.last_name || ''}`.trim() : 'Donor';
   const bloodType = profile?.blood_type || 'O−';
@@ -73,6 +86,9 @@ export default function HomeScreen() {
       <ScrollView
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 16, paddingBottom: 110 }]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#DC2626" />
+        }
       >
         <View style={styles.header}>
           <View>
@@ -154,10 +170,14 @@ export default function HomeScreen() {
             [lastDonation, 'LAST DONATION', colors.text],
             [nextEligible, 'NEXT DONATION', '#34D399']
           ].map(([value, label, tint]) => (
-            <View key={label} style={[styles.stat, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Pressable
+              key={label}
+              onPress={() => router.push('/history' as never)}
+              style={[styles.stat, { backgroundColor: colors.card, borderColor: colors.border }]}
+            >
               <Text style={[styles.statValue, { color: tint }]}>{value}</Text>
               <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{label}</Text>
-            </View>
+            </Pressable>
           ))}
         </View>
 

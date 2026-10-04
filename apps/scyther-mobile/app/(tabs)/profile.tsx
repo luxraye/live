@@ -2,15 +2,17 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@clerk/expo';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useDonorProfile } from '@/hooks/useDonorProfile';
+import { DonorQrCode } from '@/components/DonorQrCode';
 
 const recordItems = [
-  ['clock', 'Donation history', 'Your confirmed donations'],
-  ['check-circle', 'Verification centre', 'Identity and eligibility'],
-  ['share-2', 'Share donor card', 'Let people verify your record'],
+  ['clock', 'Donation history', 'Your confirmed donations and ledger proofs'],
+  ['check-circle', 'Verification centre', 'Identity and eligibility clearance'],
+  ['share-2', 'Share donor card', 'Let clinicians scan your record'],
   ['settings', 'Account settings', 'Privacy and notifications'],
 ] as const;
 
@@ -20,6 +22,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { signOut } = useAuth();
   const { data: profile } = useDonorProfile();
+  const [showQrModal, setShowQrModal] = useState(false);
 
   const name = profile?.first_name ? `${profile.first_name} ${profile.last_name || ''}`.trim() : 'Your donor profile';
   const bloodType = profile?.blood_type || '—';
@@ -27,6 +30,18 @@ export default function ProfileScreen() {
   const isVerified = level >= 3;
   const initials = profile?.first_name ? (profile.first_name[0] + (profile.last_name?.[0] || '')).toUpperCase() : 'YOU';
   const district = profile?.district ? `${profile.district.toUpperCase()} · BOTSWANA` : 'BOTSWANA';
+  const donorId = profile ? `SCT-${profile.id?.toString().padStart(4, '0')}` : 'SCT-2748-09B';
+  const qrData = `BLOODCHAIN:SCT:${profile?.id || 'DEMO'}:${bloodType}:${profile?.clerk_user_id || 'DEMO'}`;
+
+  const handleItemPress = (title: string) => {
+    if (title === 'Donation history') {
+      router.push('/history' as never);
+    } else if (title === 'Verification centre') {
+      router.push('/verification' as never);
+    } else if (title === 'Share donor card') {
+      setShowQrModal(true);
+    }
+  };
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -41,27 +56,29 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <LinearGradient colors={['#080A14', '#1A1129']} style={styles.card}>
-          <View style={styles.cardTop}>
-            <View style={styles.logoMark} />
-            <Text style={styles.wordmark}>SCYTHER</Text>
-            <Text style={[styles.level, { color: isVerified ? '#A7F3D0' : '#FCD34D' }]}>
-              LEVEL {level} · {isVerified ? 'VERIFIED' : 'PENDING'}
-            </Text>
-          </View>
-          <View style={styles.profileRow}>
-            <View>
-              <Text style={styles.name}>{name}</Text>
-              <Text style={styles.id}>{profile ? `SCT-${profile.id?.toString().padStart(4, '0')}` : 'SECURE RECORD · SCYTHER'}</Text>
+        <Pressable onPress={() => setShowQrModal(true)}>
+          <LinearGradient colors={['#080A14', '#1A1129']} style={styles.card}>
+            <View style={styles.cardTop}>
+              <View style={styles.logoMark} />
+              <Text style={styles.wordmark}>SCYTHER</Text>
+              <Text style={[styles.level, { color: isVerified ? '#A7F3D0' : '#FCD34D' }]}>
+                LEVEL {level} · {isVerified ? 'VERIFIED' : 'PENDING'}
+              </Text>
             </View>
-            <Text style={[styles.blood, { color: isVerified ? '#34D399' : '#FCD34D' }]}>{bloodType}</Text>
-          </View>
-          <View style={styles.cardBottom}>
-            <Text style={styles.place}>{district}</Text>
-            <Feather name="shield" size={24} color={isVerified ? '#34D399' : '#F0F6FF'} />
-          </View>
-          <View style={styles.strip} />
-        </LinearGradient>
+            <View style={styles.profileRow}>
+              <View>
+                <Text style={styles.name}>{name}</Text>
+                <Text style={styles.id}>{donorId}</Text>
+              </View>
+              <Text style={[styles.blood, { color: isVerified ? '#34D399' : '#FCD34D' }]}>{bloodType}</Text>
+            </View>
+            <View style={styles.cardBottom}>
+              <Text style={styles.place}>{district}</Text>
+              <Feather name="shield" size={24} color={isVerified ? '#34D399' : '#F0F6FF'} />
+            </View>
+            <View style={styles.strip} />
+          </LinearGradient>
+        </Pressable>
 
         <View style={[styles.levelPanel, isVerified && { borderColor: '#075F4E', backgroundColor: '#06251F' }]}>
           <Feather name={isVerified ? 'check-circle' : 'shield'} size={21} color={isVerified ? '#34D399' : '#FBBF24'} />
@@ -87,7 +104,7 @@ export default function ProfileScreen() {
         {recordItems.map(([icon, title, sub]) => (
           <Pressable
             key={title}
-            onPress={title === 'Verification centre' ? () => router.push('/verification' as never) : undefined}
+            onPress={() => handleItemPress(title)}
             style={[styles.row, { borderBottomColor: colors.border }]}
           >
             <View style={styles.rowIcon}>
@@ -105,6 +122,61 @@ export default function ProfileScreen() {
           <Text style={styles.signOutText}>Sign out</Text>
         </Pressable>
       </ScrollView>
+
+      {/* Share / Clinician Scan QR Modal */}
+      {showQrModal && (
+        <Modal
+          visible={showQrModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowQrModal(false)}
+        >
+          <View style={styles.qrModalBackdrop}>
+            <View style={[styles.qrModalCard, { backgroundColor: '#0B1220', borderColor: '#1E293B' }]}>
+              <View style={styles.qrModalHeader}>
+                <View>
+                  <Text style={styles.qrModalTitle}>Clinician Verification Pass</Text>
+                  <Text style={styles.qrModalSub}>Present at any certified collection dock</Text>
+                </View>
+                <Pressable onPress={() => setShowQrModal(false)} style={styles.qrModalClose}>
+                  <Feather name="x" size={19} color="#94A3B8" />
+                </Pressable>
+              </View>
+
+              <View style={styles.qrContainer}>
+                <View style={styles.qrBox}>
+                  <DonorQrCode value={qrData} size={180} color="#0B1220" bgColor="#FFFFFF" />
+                </View>
+              </View>
+
+              <View style={styles.qrDetails}>
+                <View style={styles.qrDetailCol}>
+                  <Text style={styles.qrDetailLbl}>DONOR ID</Text>
+                  <Text style={styles.qrDetailVal}>{donorId}</Text>
+                </View>
+                <View style={styles.qrDetailCol}>
+                  <Text style={styles.qrDetailLbl}>BLOOD GROUP</Text>
+                  <Text style={[styles.qrDetailVal, { color: '#34D399', fontWeight: '800' }]}>{bloodType}</Text>
+                </View>
+                <View style={styles.qrDetailCol}>
+                  <Text style={styles.qrDetailLbl}>CLEARANCE</Text>
+                  <Text style={[styles.qrDetailVal, { color: isVerified ? '#34D399' : '#FCD34D' }]}>
+                    LEVEL {level}
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={styles.qrInstruction}>
+                When scanned by a clinical operator on Rubric or Crucible, your donation will be recorded, screened, and anchored to the sovereign ledger without exposing private personal identity data.
+              </Text>
+
+              <Pressable style={styles.qrDoneBtn} onPress={() => setShowQrModal(false)}>
+                <Text style={styles.qrDoneText}>Done</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 }
@@ -140,4 +212,19 @@ const styles = StyleSheet.create({
   rowSub: { fontSize: 11, marginTop: 4 },
   signOut: { marginTop: 30, marginHorizontal: 16, paddingVertical: 15, alignItems: 'center', borderRadius: 11, backgroundColor: '#2D0808' },
   signOutText: { color: '#FCA5A5', fontWeight: '700' },
+  qrModalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  qrModalCard: { width: '100%', maxWidth: 380, borderRadius: 20, borderWidth: 1, padding: 22, alignItems: 'center', gap: 16 },
+  qrModalHeader: { width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  qrModalTitle: { color: '#F0F6FF', fontSize: 16, fontWeight: '800' },
+  qrModalSub: { color: '#94A3B8', fontSize: 11, marginTop: 2 },
+  qrModalClose: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  qrContainer: { padding: 14, backgroundColor: '#FFFFFF', borderRadius: 16, marginVertical: 6 },
+  qrBox: { alignItems: 'center', justifyContent: 'center' },
+  qrDetails: { width: '100%', flexDirection: 'row', borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#1E293B', paddingVertical: 12 },
+  qrDetailCol: { flex: 1, alignItems: 'center' },
+  qrDetailLbl: { color: '#64748B', fontSize: 8, fontWeight: '800', letterSpacing: 0.8 },
+  qrDetailVal: { color: '#F8FAFC', fontSize: 13, fontWeight: '700', marginTop: 3 },
+  qrInstruction: { color: '#94A3B8', fontSize: 11, lineHeight: 16, textAlign: 'center' },
+  qrDoneBtn: { width: '100%', height: 46, borderRadius: 10, backgroundColor: '#DC2626', alignItems: 'center', justifyContent: 'center' },
+  qrDoneText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
 });
