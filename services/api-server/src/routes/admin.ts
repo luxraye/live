@@ -215,5 +215,17 @@ router.post("/donations/record", async (req, res) => {
   });
 });
 
+// === DATABASE PURGE ===
+router.post("/purge", async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  try {
+    const { purgeAllMockData } = await import("@workspace/db");
+    await purgeAllMockData();
+    return res.json({ success: true, message: "All mock and operational records purged successfully." });
+  } catch (err: any) {
+    return res.status(500).json({ error: { code: "PURGE_ERROR", message: err?.message || String(err) } });
+  }
+});
+
 export default router;
 

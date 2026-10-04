@@ -282,19 +282,26 @@ export async function autoSeedDatabase() {
 }
 
 export async function purgeAllMockData() {
-  console.info('[DB] Purging all mock data across tables...');
+  console.info('[DB] Ensuring database schema exists...');
+  await autoSeedDatabase();
+
+  console.info('[DB] Purging all data across tables...');
   await pool.query(`
     TRUNCATE TABLE 
       donation_requests, 
       request_responses, 
+      health_articles,
+      donor_profiles,
       donor_documents, 
+      upload_grants,
+      donor_donations,
+      feedback_responses,
       clinical_orders, 
       transfusion_logs, 
       blood_units, 
       transit_manifests, 
       transit_telemetry,
-      donor_donations,
-      feedback_responses
+      donation_centres
     RESTART IDENTITY CASCADE;
   `);
   console.info('[DB] Database purge complete. All tables clean.');
