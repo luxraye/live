@@ -7,12 +7,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useCentres, DonationCentre } from '@/hooks/useCentres';
 
-const fallbackPlaces = [
-  { id: 1, name: 'Princess Marina Hospital', kind: 'National Hospital', distance_km: 2.4, is_open: true, accepts_walk_ins: true, latitude: -24.6478, longitude: 25.9073 },
-  { id: 2, name: 'Gaborone Private Hospital', kind: 'Regional Clinic', distance_km: 5.8, is_open: true, accepts_walk_ins: true, latitude: -24.6366, longitude: 25.8960 },
-  { id: 3, name: 'Block 8 Clinic', kind: 'Regional Clinic', distance_km: 8.1, is_open: false, accepts_walk_ins: false, latitude: -24.6240, longitude: 25.8861 },
-  { id: 4, name: 'Broadhurst Mobile Drive', kind: 'Mobile Drive', distance_km: 9.6, is_open: true, accepts_walk_ins: true, latitude: -24.6350, longitude: 25.8780 },
-];
 
 export default function CentresScreen() {
   const colors = useColors();
@@ -55,7 +49,7 @@ export default function CentresScreen() {
     }
   };
 
-  const places = (liveCentres && liveCentres.length > 0 ? liveCentres : fallbackPlaces).filter((p) => {
+  const places = (liveCentres ?? []).filter((p) => {
     if (activeFilter === 'Open now') return p.is_open;
     if (activeFilter === 'Walk-ins') return p.accepts_walk_ins;
     if (activeFilter === '< 5 km') return (p.distance_km ?? 99) <= 5;
@@ -131,33 +125,43 @@ export default function CentresScreen() {
           </Text>
         </View>
 
-        {places.map((place) => (
-          <Pressable
-            key={place.name}
-            style={[styles.place, { borderBottomColor: colors.border }]}
-            onPress={() => openGoogleMapsRoute(place)}
-          >
-            <View style={styles.placeIcon}>
-              <Feather name="heart" size={17} color="#EF4444" />
-            </View>
-            <View style={styles.placeCopy}>
-              <Text style={[styles.placeName, { color: colors.text }]}>{place.name}</Text>
-              <Text style={[styles.placeKind, { color: colors.mutedForeground }]}>
-                {place.kind} {place.distance_km ? <Text style={{ color: '#06B6D4' }}>· {place.distance_km.toFixed(1)} km</Text> : ''}
-              </Text>
-              <View style={styles.openLine}>
-                <View style={[styles.statusDot, { backgroundColor: place.is_open ? '#34D399' : '#667085' }]} />
-                <Text style={[styles.status, { color: place.is_open ? '#34D399' : colors.mutedForeground }]}>
-                  {place.is_open ? 'Open now' : 'Closed'}
-                </Text>
+        {places.length === 0 ? (
+          <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Feather name="map-pin" size={28} color="#67E8F9" style={{ alignSelf: 'center', marginBottom: 10 }} />
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>No Donation Centres Found</Text>
+            <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
+              Once donation facilities and mobile blood drives are registered in the network, they will appear here with live opening hours and one-tap routing.
+            </Text>
+          </View>
+        ) : (
+          places.map((place) => (
+            <Pressable
+              key={place.id ?? place.name}
+              style={[styles.place, { borderBottomColor: colors.border }]}
+              onPress={() => openGoogleMapsRoute(place)}
+            >
+              <View style={styles.placeIcon}>
+                <Feather name="heart" size={17} color="#EF4444" />
               </View>
-            </View>
-            <View style={styles.routeAction}>
-              <Text style={styles.routeText}>Route</Text>
-              <Feather name="navigation-2" size={15} color="#67E8F9" />
-            </View>
-          </Pressable>
-        ))}
+              <View style={styles.placeCopy}>
+                <Text style={[styles.placeName, { color: colors.text }]}>{place.name}</Text>
+                <Text style={[styles.placeKind, { color: colors.mutedForeground }]}>
+                  {place.kind} {place.distance_km ? <Text style={{ color: '#06B6D4' }}>· {place.distance_km.toFixed(1)} km</Text> : ''}
+                </Text>
+                <View style={styles.openLine}>
+                  <View style={[styles.statusDot, { backgroundColor: place.is_open ? '#34D399' : '#667085' }]} />
+                  <Text style={[styles.status, { color: place.is_open ? '#34D399' : colors.mutedForeground }]}>
+                    {place.is_open ? 'Open now' : 'Closed'}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.routeAction}>
+                <Text style={styles.routeText}>Route</Text>
+                <Feather name="navigation-2" size={15} color="#67E8F9" />
+              </View>
+            </Pressable>
+          ))
+        )}
       </ScrollView>
     </View>
   );
@@ -195,4 +199,7 @@ const styles = StyleSheet.create({
   status: { fontSize: 10, fontWeight: '600' },
   routeAction: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#0A2B35', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
   routeText: { color: '#67E8F9', fontSize: 11, fontWeight: '700' },
+  emptyCard: { marginHorizontal: 16, marginTop: 24, padding: 24, borderRadius: 14, borderWidth: 1, alignItems: 'center', textAlign: 'center' },
+  emptyTitle: { fontSize: 15, fontWeight: '700', marginBottom: 6 },
+  emptyDesc: { fontSize: 12, lineHeight: 18, textAlign: 'center' },
 });

@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { getRequestAuth } from "../lib/auth";
-import { pool, MOCK_CENTRES, MOCK_ARTICLES, MOCK_DOCS, MOCK_REQUESTS } from "@workspace/db";
+import { pool } from "@workspace/db";
 import { anchorDonationToFabric } from "../lib/fabric";
 
 const router: IRouter = Router();
@@ -43,7 +43,7 @@ router.get("/centres", async (req, res) => {
     const result = await pool.query("SELECT * FROM donation_centres ORDER BY created_at DESC");
     return res.json(result.rows);
   } catch (err) {
-    return res.json(MOCK_CENTRES);
+    return res.json([]);
   }
 });
 
@@ -76,7 +76,7 @@ router.get("/articles", async (req, res) => {
     const result = await pool.query("SELECT * FROM health_articles ORDER BY created_at DESC");
     return res.json(result.rows);
   } catch (err) {
-    return res.json(MOCK_ARTICLES);
+    return res.json([]);
   }
 });
 
@@ -109,7 +109,7 @@ router.get(["/requests", "/network/requests"], async (req, res) => {
     const result = await pool.query("SELECT *, NOW() - created_at AS age FROM donation_requests WHERE is_open = true ORDER BY priority = 'critical' DESC, created_at DESC");
     return res.json(result.rows);
   } catch (err) {
-    return res.json(MOCK_REQUESTS);
+    return res.json([]);
   }
 });
 
@@ -144,7 +144,7 @@ router.get("/verification-queue", async (req, res) => {
     `);
     return res.json(result.rows);
   } catch (err) {
-    return res.json(MOCK_DOCS);
+    return res.json([]);
   }
 });
 

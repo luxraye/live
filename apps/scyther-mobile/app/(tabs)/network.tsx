@@ -84,6 +84,14 @@ export default function NetworkScreen() {
         </View>
         {isLoading && items.length === 0 ? (
           <Text style={{ color: colors.mutedForeground, textAlign: 'center', marginTop: 24 }}>Loading live requests…</Text>
+        ) : items.length === 0 ? (
+          <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Feather name="check-circle" size={28} color="#34D399" style={{ alignSelf: 'center', marginBottom: 10 }} />
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>No Active Shortage Signals</Text>
+            <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
+              Once hospitals and regional clinics broadcast urgent blood group shortages, requests will show up here for you to respond and pledge.
+            </Text>
+          </View>
         ) : (
           items.map((item) => {
             const isPledged = respondedIds.includes(item.id);
@@ -234,4 +242,7 @@ const styles = StyleSheet.create({
   modalPrimaryBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
   modalSecondaryBtn: { height: 40, alignItems: 'center', justifyContent: 'center' },
   modalSecondaryBtnText: { color: '#94A3B8', fontSize: 12, fontWeight: '600' },
+  emptyCard: { marginHorizontal: 16, marginTop: 24, padding: 24, borderRadius: 14, borderWidth: 1, alignItems: 'center', textAlign: 'center' },
+  emptyTitle: { fontSize: 15, fontWeight: '700', marginBottom: 6 },
+  emptyDesc: { fontSize: 12, lineHeight: 18, textAlign: 'center' },
 });

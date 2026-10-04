@@ -394,13 +394,14 @@ function downloadBrief(stats: StatsOverview | undefined, matrix: MatrixCell[]) {
 
 function OverviewPage({ notify }: { notify: Notify }) {
   const { data: stats, isLoading, refetch } = useStatsOverview();
-  const defaultMatrix: MatrixCell[] = [
-    { type: 'O+', count: 84, s: 84, d: '8.4d', c: '' }, { type: 'O-', count: 21, s: 42, d: '4.2d', c: 'warn' },
-    { type: 'A+', count: 54, s: 67, d: '6.7d', c: '' }, { type: 'A-', count: 11, s: 31, d: '3.1d', c: 'critical' },
-    { type: 'B+', count: 51, s: 73, d: '7.3d', c: '' }, { type: 'B-', count: 14, s: 48, d: '4.8d', c: 'warn' },
-    { type: 'AB+', count: 23, s: 58, d: '5.8d', c: '' }, { type: 'AB-', count: 5, s: 26, d: '2.6d', c: 'critical' },
-  ];
-  const matrix = stats?.inventoryMatrix && stats.inventoryMatrix.length > 0 ? stats.inventoryMatrix : defaultMatrix;
+  const matrix = stats?.inventoryMatrix ?? [];
+
+  const totalDonors = stats?.totalDonors ?? 0;
+  const pendingVerifications = stats?.pendingVerifications ?? 0;
+  const verifiedIdentities = Math.max(0, totalDonors - pendingVerifications);
+  const activeCentres = stats?.activeCentres ?? 0;
+  const openRequests = stats?.openRequests ?? 0;
+  const publishedArticles = stats?.publishedArticles ?? 0;
 
   const handleExport = () => {
     downloadBrief(stats, matrix);
@@ -422,35 +423,45 @@ function OverviewPage({ notify }: { notify: Notify }) {
         }
       />
       <div className="grid kpi-grid">
-        <Kpi label="Active donors" value={stats?.totalDonors != null ? stats.totalDonors.toLocaleString() : '842'} meta="Verified members" icon={Users} loading={isLoading} />
-        <Kpi label="Verified identities" value={stats?.totalDonors != null ? String(Math.max(0, (stats.totalDonors ?? 842) - (stats.pendingVerifications ?? 2))) : '840'} meta="Documents approved" icon={ShieldCheck} loading={isLoading} />
-        <Kpi label="Open centres" value={String(stats?.activeCentres ?? 4)} meta="Active facilities" tone="warn" icon={Building2} loading={isLoading} />
-        <Kpi label="Open requests" value={(stats?.openRequests ?? 2).toString().padStart(2, '0')} meta={stats?.openRequests ? 'Require response' : 'None active'} tone={stats?.openRequests ? 'critical' : undefined} icon={Siren} loading={isLoading} />
+        <Kpi label="Active donors" value={totalDonors.toLocaleString()} meta={totalDonors ? "Verified members" : "Network initialized"} icon={Users} loading={isLoading} />
+        <Kpi label="Verified identities" value={verifiedIdentities.toLocaleString()} meta={verifiedIdentities ? "Documents approved" : "Pending submissions"} icon={ShieldCheck} loading={isLoading} />
+        <Kpi label="Open centres" value={activeCentres.toString().padStart(2, '0')} meta={activeCentres ? "Active facilities" : "No active facilities"} tone={activeCentres ? undefined : "warn"} icon={Building2} loading={isLoading} />
+        <Kpi label="Open requests" value={openRequests.toString().padStart(2, '0')} meta={openRequests ? "Require response" : "No active shortages"} tone={openRequests ? "critical" : undefined} icon={Siren} loading={isLoading} />
       </div>
       <div className="grid split-grid">
         <section className="panel">
           <div className="panel-head"><span className="panel-title">Blood supply matrix</span><span className="panel-meta">live from national ledger</span></div>
           <div className="panel-body">
-            <div className="matrix">
-              {matrix.map(item => (
-                <div className={'matrix-cell ' + item.c} key={item.type}>
-                  <div className="blood">{item.type}</div>
-                  <div className="stock">{item.s}%</div>
-                  <div className="stock-bar"><i style={{ width: item.s + '%' }} /></div>
-                  <small className="stock-note">{item.d} cover</small>
+            {matrix.length > 0 ? (
+              <div className="matrix">
+                {matrix.map(item => (
+                  <div className={'matrix-cell ' + item.c} key={item.type}>
+                    <div className="blood">{item.type}</div>
+                    <div className="stock">{item.s}%</div>
+                    <div className="stock-bar"><i style={{ width: item.s + '%' }} /></div>
+                    <small className="stock-note">{item.d} cover</small>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-panel-notice">
+                <Activity size={22} color="#39d6e5" />
+                <div>
+                  <strong>Blood Supply Ledger Clear</strong>
+                  <p>No inventory units currently registered in the database. Once donor intake units or cold-vault stores are checked in, real-time blood group reserves and days of cover will show up here.</p>
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
         </section>
         <section className="panel">
           <div className="panel-head"><span className="panel-title">Network telemetry</span><span className="panel-meta">live from API</span></div>
           <div className="panel-body">
             <div className="grid telemetry">
-              <div className="telemetry-item"><span>Total donors</span><b>{isLoading ? '...' : (stats?.totalDonors ?? 842).toLocaleString()}</b></div>
-              <div className="telemetry-item"><span>Pending verifications</span><b style={{ color: (stats?.pendingVerifications ?? 0) > 0 ? '#e8b850' : '#51e0aa' }}>{isLoading ? '...' : (stats?.pendingVerifications ?? 2)}</b></div>
-              <div className="telemetry-item"><span>Open requests</span><b style={{ color: (stats?.openRequests ?? 0) > 0 ? '#f27a86' : '#51e0aa' }}>{isLoading ? '...' : (stats?.openRequests ?? 2)}</b></div>
-              <div className="telemetry-item"><span>Published articles</span><b>{isLoading ? '...' : (stats?.publishedArticles ?? 5)}</b></div>
+              <div className="telemetry-item"><span>Total donors</span><b>{isLoading ? '...' : totalDonors.toLocaleString()}</b></div>
+              <div className="telemetry-item"><span>Pending verifications</span><b style={{ color: pendingVerifications > 0 ? '#e8b850' : '#51e0aa' }}>{isLoading ? '...' : pendingVerifications}</b></div>
+              <div className="telemetry-item"><span>Open requests</span><b style={{ color: openRequests > 0 ? '#f27a86' : '#51e0aa' }}>{isLoading ? '...' : openRequests}</b></div>
+              <div className="telemetry-item"><span>Published articles</span><b>{isLoading ? '...' : publishedArticles}</b></div>
             </div>
           </div>
         </section>
@@ -506,7 +517,7 @@ function VerificationPage({ notify }: { notify: Notify }) {
                 </tr>
               ))}
               {!isLoading && !items.length && (
-                <tr><td colSpan={5}><div className="empty"><CheckCircle2 size={22} /><div>No submissions in queue.</div></div></td></tr>
+                <tr><td colSpan={5}><div className="empty"><CheckCircle2 size={22} /><div>Identity verification queue clear — Once donors submit identification documents, applications will show up here.</div></div></td></tr>
               )}
             </tbody>
           </table>
@@ -579,7 +590,7 @@ function CentresPage({ notify }: { notify: Notify }) {
                 </tr>
               ))}
               {!isLoading && !visible.length && (
-                <tr><td colSpan={5}><div className="empty"><Building2 size={22} /><div>No centres match this search.</div></div></td></tr>
+                <tr><td colSpan={5}><div className="empty"><Building2 size={22} /><div>No donation centres registered yet — Click "Add centre" above to configure collection points in the network.</div></div></td></tr>
               )}
             </tbody>
           </table>
@@ -685,7 +696,7 @@ function CmsPage({ notify }: { notify: Notify }) {
                 </tr>
               ))}
               {!isLoading && !articles.length && (
-                <tr><td colSpan={4}><div className="empty"><FileText size={22} /><div>No articles published yet.</div></div></td></tr>
+                <tr><td colSpan={4}><div className="empty"><FileText size={22} /><div>No health bulletins published yet — Use the form above to compose and publish guidance to donor apps.</div></div></td></tr>
               )}
             </tbody>
           </table>
@@ -765,7 +776,7 @@ function RequestsPage({ notify }: { notify: Notify }) {
                       <button className="btn btn-sm btn-danger" onClick={() => closeReq(r.id, { onSuccess: () => notify('Request closed'), onError: () => notify('Close failed', 'error') })}>Close request</button>
                     </div>
                   ))
-                : <div className="empty"><CheckCircle2 size={22} /><div>No active shortage requests.</div></div>}
+                : <div className="empty"><CheckCircle2 size={22} /><div>No active shortage requests — Once clinical wards broadcast emergency requirements, active signals will show up here.</div></div>}
           </div>
         </section>
       </div>

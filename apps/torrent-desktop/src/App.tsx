@@ -458,7 +458,7 @@ function HomeContent({ operatorRole, onExit }: { operatorRole: string; onExit: (
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [newDispatchModalOpen, setNewDispatchModalOpen] = useState(false);
-  const [dispatches, setDispatches] = useState<DispatchItem[]>(INITIAL_DISPATCHES);
+  const [dispatches, setDispatches] = useState<DispatchItem[]>([]);
   const [dispatchFilter, setDispatchFilter] = useState<'all' | 'STAT' | 'In Transit' | 'Packing'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [toast, setToast] = useState('');
@@ -471,7 +471,7 @@ function HomeContent({ operatorRole, onExit }: { operatorRole: string; onExit: (
     })
       .then((res) => (res.ok ? res.json() : null))
       .then((rows) => {
-        if (Array.isArray(rows) && rows.length > 0) {
+        if (Array.isArray(rows)) {
           const liveItems: DispatchItem[] = rows.map((r: any) => ({
             id: String(r.id),
             code: r.manifest_number,
@@ -494,14 +494,12 @@ function HomeContent({ operatorRole, onExit }: { operatorRole: string; onExit: (
               { type: 'Plasma (FFP)', count: 4, tag: 'FFP' },
             ],
           }));
-          setDispatches((prev) => {
-            const existingCodes = new Set(prev.map((p) => p.code));
-            const newLive = liveItems.filter((l) => !existingCodes.has(l.code));
-            return [...newLive, ...prev];
-          });
+          setDispatches(liveItems);
         }
       })
-      .catch(() => null);
+      .catch(() => {
+        setDispatches([]);
+      });
   }, [apiBase]);
 
   const routeIsPrimary = route === 'Gaborone → Molepolole';
@@ -902,7 +900,7 @@ function HomeContent({ operatorRole, onExit }: { operatorRole: string; onExit: (
               <div className="tt-heading-row">
                 <div>
                   <div className="tt-kicker"><span className="tt-live-dot" /> National Corridor Logistics</div>
-                  <h1 className="tt-heading">Active Dispatches<br /><em>4 Live Corridors</em></h1>
+                  <h1 className="tt-heading">Active Dispatches<br /><em>{filteredDispatches.length} Live Corridor{filteredDispatches.length === 1 ? '' : 's'}</em></h1>
                   <p className="tt-subheading">Track and manage emergency and routine cold-chain transport vehicles nationwide.</p>
                 </div>
                 <button
@@ -950,7 +948,33 @@ function HomeContent({ operatorRole, onExit }: { operatorRole: string; onExit: (
 
               {/* Dispatches Grid */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 16 }}>
-                {filteredDispatches.map((item) => (
+                {filteredDispatches.length === 0 ? (
+                  <div
+                    className="tt-card"
+                    style={{
+                      padding: '36px 24px',
+                      textAlign: 'center',
+                      gridColumn: '1 / -1',
+                      background: presentation ? '#162f39' : '#ffffff',
+                      border: '1px dashed #cfddd5',
+                      borderRadius: 12,
+                    }}
+                  >
+                    <Truck size={36} style={{ color: '#0e8490', opacity: 0.6, margin: '0 auto 12px' }} />
+                    <h3 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 6px' }}>No Active Courier Dispatches</h3>
+                    <p style={{ fontSize: 13, color: '#72918b', maxWidth: 480, margin: '0 auto 16px', lineHeight: 1.5 }}>
+                      Once blood units are allocated for inter-facility dispatch, live GPS corridors, vehicle telemetry, and cold-chain temperature monitors will show up here.
+                    </p>
+                    <button
+                      className="tt-primary-btn"
+                      onClick={() => setNewDispatchModalOpen(true)}
+                      style={{ margin: '0 auto' }}
+                    >
+                      <Plus size={14} /> Create Emergency Dispatch
+                    </button>
+                  </div>
+                ) : (
+                  filteredDispatches.map((item) => (
                   <div key={item.id} className="tt-card" style={{ padding: 18 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                       <div>
@@ -1024,7 +1048,7 @@ function HomeContent({ operatorRole, onExit }: { operatorRole: string; onExit: (
                       </div>
                     </div>
                   </div>
-                ))}
+                )))}
               </div>
             </section>
           )}

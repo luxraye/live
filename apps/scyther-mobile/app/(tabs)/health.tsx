@@ -6,12 +6,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useArticles } from '@/hooks/useArticles';
 
-const fallbackArticles = [
-  { id: 1, title: 'What O-negative donors should know', read_time_minutes: 6, icon_name: 'heart', topic: 'blood_type' },
-  { id: 2, title: 'The 56-day donation interval explained', read_time_minutes: 4, icon_name: 'clock', topic: 'safety' },
-  { id: 3, title: 'Before you donate: a simple nutrition checklist', read_time_minutes: 3, icon_name: 'check-circle', topic: 'preparation' },
-];
-
 export default function HealthScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -19,7 +13,7 @@ export default function HealthScreen() {
   const [activeArticle, setActiveArticle] = useState<any | null>(null);
 
   const { data: liveArticles } = useArticles(selectedTopic);
-  const articlesList = liveArticles && liveArticles.length > 0 ? liveArticles : fallbackArticles;
+  const articlesList = liveArticles ?? [];
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -75,24 +69,34 @@ export default function HealthScreen() {
         <Text style={[styles.section, { color: colors.text }]}>
           {selectedTopic ? `FILTERED GUIDES (${selectedTopic.toUpperCase()})` : 'LATEST GUIDES'}
         </Text>
-        {articlesList.map((article) => (
-          <Pressable
-            key={article.id}
-            onPress={() => setActiveArticle(article)}
-            style={[styles.article, { backgroundColor: colors.card, borderColor: colors.border }]}
-          >
-            <View style={styles.articleIcon}>
-              <Feather name={(article.icon_name || 'heart') as 'heart'} size={18} color="#EF4444" />
-            </View>
-            <View style={styles.articleCopy}>
-              <Text style={[styles.articleTitle, { color: colors.text }]}>{article.title}</Text>
-              <Text style={[styles.articleMeta, { color: colors.mutedForeground }]}>
-                {article.read_time_minutes} MIN READ · HEALTH HUB
-              </Text>
-            </View>
-            <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
-          </Pressable>
-        ))}
+        {articlesList.length === 0 ? (
+          <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Feather name="book-open" size={26} color="#06B6D4" style={{ alignSelf: 'center', marginBottom: 10 }} />
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>No Health Articles Published</Text>
+            <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
+              Once clinical bulletins and donor education articles are published by health authorities, they will show up here.
+            </Text>
+          </View>
+        ) : (
+          articlesList.map((article) => (
+            <Pressable
+              key={article.id}
+              onPress={() => setActiveArticle(article)}
+              style={[styles.article, { backgroundColor: colors.card, borderColor: colors.border }]}
+            >
+              <View style={styles.articleIcon}>
+                <Feather name={(article.icon_name || 'heart') as 'heart'} size={18} color="#EF4444" />
+              </View>
+              <View style={styles.articleCopy}>
+                <Text style={[styles.articleTitle, { color: colors.text }]}>{article.title}</Text>
+                <Text style={[styles.articleMeta, { color: colors.mutedForeground }]}>
+                  {article.read_time_minutes} MIN READ · HEALTH HUB
+                </Text>
+              </View>
+              <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+            </Pressable>
+          ))
+        )}
       </ScrollView>
 
       {/* Article Detail Reader Modal */}
@@ -144,4 +148,7 @@ const styles = StyleSheet.create({
   modalClose: { padding: 4 },
   modalTitle: { fontSize: 18, fontWeight: '800', marginTop: 10, letterSpacing: -0.4 },
   modalBody: { fontSize: 13, lineHeight: 21, opacity: 0.9 },
+  emptyCard: { marginHorizontal: 16, marginTop: 14, padding: 24, borderRadius: 14, borderWidth: 1, alignItems: 'center', textAlign: 'center' },
+  emptyTitle: { fontSize: 15, fontWeight: '700', marginBottom: 6 },
+  emptyDesc: { fontSize: 12, lineHeight: 18, textAlign: 'center' },
 });

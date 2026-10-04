@@ -195,56 +195,42 @@ export const MOCK_DOCS = [
 
 export class MockPool {
   private feedbackSubmissions: any[] = [];
-  private dynamicOrders: any[] = [...MOCK_ORDERS];
-  private dynamicRequests: any[] = [...MOCK_REQUESTS];
-  private dynamicCentres: any[] = [...MOCK_CENTRES];
-  private dynamicArticles: any[] = [...MOCK_ARTICLES];
-  private dynamicUnits: any[] = [...MOCK_UNITS];
-  private dynamicDocs: any[] = [...MOCK_DOCS];
+  private dynamicOrders: any[] = [];
+  private dynamicRequests: any[] = [];
+  private dynamicCentres: any[] = [];
+  private dynamicArticles: any[] = [];
+  private dynamicUnits: any[] = [];
+  private dynamicDocs: any[] = [];
 
   async query(sql: string, params: any[] = []): Promise<{ rows: any[] }> {
     const s = sql.toLowerCase().trim();
 
     // 1. Aggregations (COUNT / SUM) must be processed BEFORE general table SELECTs
     if (s.includes('count(*) from donor_profiles')) {
-      return { rows: [{ count: 842 }] };
+      return { rows: [{ count: 0 }] };
     }
     if (s.includes('count(*) from donor_documents')) {
       const pending = this.dynamicDocs.filter((d) => d.status === 'pending').length;
-      return { rows: [{ count: pending || 2 }] };
+      return { rows: [{ count: pending }] };
     }
     if (s.includes('count(*) from donation_centres')) {
-      return { rows: [{ count: this.dynamicCentres.length || 4 }] };
+      return { rows: [{ count: this.dynamicCentres.length }] };
     }
     if (s.includes('count(*) from donation_requests')) {
       const open = this.dynamicRequests.filter((r) => r.is_open).length;
-      return { rows: [{ count: open || 2 }] };
+      return { rows: [{ count: open }] };
     }
     if (s.includes('count(*) from health_articles')) {
-      return { rows: [{ count: this.dynamicArticles.length || 5 }] };
+      return { rows: [{ count: this.dynamicArticles.length }] };
     }
     if (s.includes('count(*) from feedback_responses')) {
-      return { rows: [{ count: this.feedbackSubmissions.length + 42 }] };
+      return { rows: [{ count: this.feedbackSubmissions.length }] };
     }
     if (s.includes('count(*) from blood_units')) {
-      if (s.includes('collected_at >=')) {
-        return { rows: [{ count: 36 }] };
-      }
-      return { rows: [{ count: 248 }] };
+      return { rows: [{ count: this.dynamicUnits.length }] };
     }
     if (s.includes('from blood_units') && s.includes('group by blood_type')) {
-      return {
-        rows: [
-          { blood_type: 'O+', count: 84 },
-          { blood_type: 'O-', count: 21 },
-          { blood_type: 'A+', count: 54 },
-          { blood_type: 'A-', count: 11 },
-          { blood_type: 'B+', count: 51 },
-          { blood_type: 'B-', count: 14 },
-          { blood_type: 'AB+', count: 23 },
-          { blood_type: 'AB-', count: 5 },
-        ],
-      };
+      return { rows: [] };
     }
     if (s.includes('sum(response_count)')) {
       const sum = this.dynamicRequests.reduce((acc, r) => acc + (r.response_count || 0), 0);

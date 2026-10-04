@@ -273,93 +273,31 @@ export async function autoSeedDatabase() {
       ALTER TABLE transit_telemetry ADD COLUMN IF NOT EXISTS event_id TEXT;
     `);
 
-    // 2. Check if donation_centres is empty; if so, seed from MOCK_CENTRES
-    const centresRes = await pool.query('SELECT COUNT(*) FROM donation_centres');
-    if (Number(centresRes.rows[0]?.count ?? 0) === 0) {
-      console.log('[DB] Seeding default Botswana donation centres...');
-      for (const c of MOCK_CENTRES) {
-        await pool.query(
-          `INSERT INTO donation_centres (name, kind, address, district, latitude, longitude, phone, is_open, opens_at, closes_at, accepts_walk_ins, is_active)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-          [c.name, c.kind, c.address, c.district, c.latitude, c.longitude, c.phone, c.is_open, c.opens_at, c.closes_at, c.accepts_walk_ins, c.is_active]
-        );
-      }
-    }
 
-    // 3. Check if donation_requests is empty; if so, seed from MOCK_REQUESTS
-    const requestsRes = await pool.query('SELECT COUNT(*) FROM donation_requests');
-    if (Number(requestsRes.rows[0]?.count ?? 0) === 0) {
-      console.log('[DB] Seeding default Botswana emergency donation requests...');
-      for (const r of MOCK_REQUESTS) {
-        await pool.query(
-          `INSERT INTO donation_requests (blood_type, priority, facility_name, description, district, latitude, longitude, response_count, is_open)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-          [r.blood_type, r.priority, r.facility_name, r.description, r.district, r.latitude, r.longitude, r.response_count, r.is_open]
-        );
-      }
-    }
 
-    // 4. Check if health_articles is empty; if so, seed from MOCK_ARTICLES
-    const articlesRes = await pool.query('SELECT COUNT(*) FROM health_articles WHERE is_published = true');
-    if (Number(articlesRes.rows[0]?.count ?? 0) === 0) {
-      console.log('[DB] Seeding default health articles...');
-      for (const a of MOCK_ARTICLES) {
-        await pool.query(
-          `INSERT INTO health_articles (title, slug, body_markdown, topic, read_time_minutes, icon_name, is_published, published_at)
-           VALUES ($1, $2, $3, $4, $5, $6, true, NOW())
-           ON CONFLICT (slug) DO UPDATE SET is_published = true, published_at = COALESCE(health_articles.published_at, NOW())`,
-          [a.title, a.slug, a.body_markdown, a.topic, a.read_time_minutes, a.icon_name]
-        );
-      }
-    }
-
-    // 5. Check if donor_documents is empty; if so, seed from MOCK_DOCS
-    const docsRes = await pool.query('SELECT COUNT(*) FROM donor_documents');
-    if (Number(docsRes.rows[0]?.count ?? 0) === 0) {
-      console.log('[DB] Seeding sample verification queue documents...');
-      for (const d of MOCK_DOCS) {
-        const objectPath = `/objects/${d.clerk_user_id}/${d.document_type}.png`;
-        await pool.query(
-          `INSERT INTO donor_documents (clerk_user_id, document_type, document_url, object_path, status)
-           VALUES ($1, $2, $3, $4, $5)`,
-          [d.clerk_user_id, d.document_type, d.document_url, objectPath, d.status]
-        );
-      }
-    }
-
-    // 6. Check if donor_profiles is empty; if so, seed baseline demo donor profiles
-    const donorsRes = await pool.query('SELECT COUNT(*) FROM donor_profiles');
-    if (Number(donorsRes.rows[0]?.count ?? 0) === 0) {
-      console.log('[DB] Seeding baseline donor profiles...');
-      await pool.query(`
-        INSERT INTO donor_profiles (clerk_user_id, first_name, last_name, blood_type, district, phone, location_enabled, verification_level)
-        VALUES 
-          ('user_donor_001', 'Kabo', 'Tau', 'O-', 'Gaborone', '+267 71 234 567', true, 1),
-          ('user_donor_002', 'Lesego', 'Moloi', 'A+', 'Francistown', '+267 72 345 678', true, 1),
-          ('user_donor_003', 'Tshepo', 'Dube', 'B+', 'Maun', '+267 73 456 789', true, 2),
-          ('user_donor_004', 'Neo', 'Kgosi', 'O+', 'Serowe', '+267 74 567 890', true, 4),
-          ('user_donor_005', 'Amantle', 'Montsho', 'AB-', 'Kanye', '+267 75 678 901', true, 3)
-        ON CONFLICT (clerk_user_id) DO NOTHING
-      `);
-    }
-
-    // 7. Check if blood_units is empty; if so, seed baseline units
-    const unitsRes = await pool.query('SELECT COUNT(*) FROM blood_units');
-    if (Number(unitsRes.rows[0]?.count ?? 0) === 0) {
-      console.log('[DB] Seeding baseline laboratory blood units...');
-      await pool.query(`
-        INSERT INTO blood_units (bag_barcode, donation_tx_id, donor_hash, blood_type, component_type, volume_ml, status, vault_location, is_reactive)
-        VALUES
-          ('UNIT-BOTS-2026-9901', 'tx-bc-init-001', 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', 'O-', 'prbc', 450, 'tested_passed', 'Princess Marina Vault A · Shelf 1', false),
-          ('UNIT-BOTS-2026-9902', 'tx-bc-init-002', 'ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb', 'O+', 'prbc', 450, 'tested_passed', 'Princess Marina Vault A · Shelf 2', false),
-          ('UNIT-BOTS-2026-9903', 'tx-bc-init-003', '4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce', 'A+', 'prbc', 450, 'tested_passed', 'Princess Marina Vault B · Shelf 1', false),
-          ('UNIT-BOTS-2026-9904', 'tx-bc-init-004', '4b227777d4dd1fc61c6f884f48641d02b4d121d3fd328cb08b5531fcacdabf8a', 'B+', 'whole_blood', 450, 'quarantined', 'Quarantine Rack Q1', false)
-        ON CONFLICT (bag_barcode) DO NOTHING
-      `);
-    }
+    console.info('[DB] Database schema verified and clean.');
   } catch (err: any) {
-    console.warn('[DB] Auto-seed error (non-fatal):', err?.message || err);
+    console.warn('[DB] Auto-seed schema error (non-fatal):', err?.message || err);
   }
+}
+
+export async function purgeAllMockData() {
+  console.info('[DB] Purging all mock data across tables...');
+  await pool.query(`
+    TRUNCATE TABLE 
+      donation_requests, 
+      request_responses, 
+      donor_documents, 
+      clinical_orders, 
+      transfusion_logs, 
+      blood_units, 
+      transit_manifests, 
+      transit_telemetry,
+      donor_donations,
+      feedback_responses
+    RESTART IDENTITY CASCADE;
+  `);
+  console.info('[DB] Database purge complete. All tables clean.');
 }
 
 export * from "./schema";

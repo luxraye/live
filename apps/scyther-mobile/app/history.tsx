@@ -12,43 +12,10 @@ export default function HistoryScreen() {
   const { data: profile } = useDonorProfile();
   const { data: liveDonations } = useDonorDonations();
 
-  const isDemo = profile?.is_demo;
-
-  const mockTimeline = [
-    {
-      id: 'tx-01',
-      date: '14 Sep 2026',
-      facility: 'Princess Marina Hospital (Gaborone)',
-      status: 'Transfused to Patient',
-      verified: true,
-      bloodType: profile?.blood_type || 'O−',
-      volumeMl: 450,
-      txId: 'tx-bc-pmh-2026-0914-88',
-      milestones: [
-        { label: 'Phlebotomy & Bag Tagging', date: '14 Sep · 09:15 CAT', complete: true },
-        { label: 'Central Lab Virology & ABO Cleared', date: '14 Sep · 14:30 CAT', complete: true },
-        { label: 'Hyperledger Blockchain Anchor Verified', date: '14 Sep · 15:45 CAT', complete: true },
-        { label: 'Transfused at Scottish Livingstone Hospital', date: '16 Sep · 07:11 CAT', complete: true },
-      ],
-    },
-    {
-      id: 'tx-02',
-      date: '02 Jun 2026',
-      facility: 'National Blood Transfusion Service (HQ)',
-      status: 'Archived in National Reserve',
-      verified: true,
-      bloodType: profile?.blood_type || 'O−',
-      volumeMl: 450,
-      txId: 'tx-bc-nbts-2026-0602-41',
-      milestones: [
-        { label: 'Phlebotomy & Bag Tagging', date: '02 Jun · 10:00 CAT', complete: true },
-        { label: 'Central Lab Virology & ABO Cleared', date: '02 Jun · 16:10 CAT', complete: true },
-        { label: 'Hyperledger Blockchain Anchor Verified', date: '02 Jun · 17:00 CAT', complete: true },
-      ],
-    },
-  ];
-
-  const hasLive = Array.isArray(liveDonations) && liveDonations.length > 0;
+  const totalDonations = liveDonations?.length ?? 0;
+  const totalVolumeLiters = ((totalDonations * 450) / 1000).toFixed(1);
+  const verifiedPct = liveDonations && totalDonations > 0 ? Math.round((liveDonations.filter((d: any) => d.verified).length / totalDonations) * 100) : 100;
+  const hasLive = Boolean(liveDonations && totalDonations > 0);
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background, paddingTop: insets.top + 14 }]}>
@@ -69,26 +36,26 @@ export default function HistoryScreen() {
         {/* Donor Impact Stats Banner */}
         <View style={[styles.statsCard, { borderColor: colors.border, backgroundColor: colors.card }]}>
           <View style={styles.statCol}>
-            <Text style={styles.statVal}>{hasLive ? liveDonations.length : isDemo ? '02' : '01'}</Text>
+            <Text style={styles.statVal}>{totalDonations.toString().padStart(2, '0')}</Text>
             <Text style={[styles.statLbl, { color: colors.mutedForeground }]}>TOTAL UNITS</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.statCol}>
             <Text style={[styles.statVal, { color: '#34D399' }]}>
-              {hasLive ? `${(liveDonations.length * 0.45).toFixed(1)}L` : isDemo ? '0.9L' : '0.45L'}
+              {totalVolumeLiters}L
             </Text>
             <Text style={[styles.statLbl, { color: colors.mutedForeground }]}>VOLUME GIVEN</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.statCol}>
-            <Text style={[styles.statVal, { color: '#67E8F9' }]}>100%</Text>
+            <Text style={[styles.statVal, { color: '#67E8F9' }]}>{verifiedPct}%</Text>
             <Text style={[styles.statLbl, { color: colors.mutedForeground }]}>VERIFIED INTEGRITY</Text>
           </View>
         </View>
 
         <Text style={[styles.sectionHeading, { color: colors.text }]}>CONFIRMED DONATION RECORDS</Text>
 
-        {hasLive ? (
+        {hasLive && liveDonations ? (
           liveDonations.map((d) => (
             <View key={d.id} style={[styles.donationCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.cardHeader}>
@@ -115,37 +82,13 @@ export default function HistoryScreen() {
             </View>
           ))
         ) : (
-          mockTimeline.map((item) => (
-            <View key={item.id} style={[styles.donationCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <View style={styles.cardHeader}>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.facilityName, { color: colors.text }]}>{item.facility}</Text>
-                  <Text style={[styles.dateText, { color: colors.mutedForeground }]}>{item.date} · 450 mL ({item.bloodType})</Text>
-                </View>
-                <View style={styles.badge}>
-                  <Feather name="check-circle" size={12} color="#34D399" />
-                  <Text style={styles.badgeText}>LEDGER VERIFIED</Text>
-                </View>
-              </View>
-
-              <View style={styles.timeline}>
-                {item.milestones.map((m, idx) => (
-                  <View key={idx} style={styles.milestoneRow}>
-                    <View style={styles.timelineDot} />
-                    <View style={styles.milestoneContent}>
-                      <Text style={[styles.milestoneLabel, { color: colors.text }]}>{m.label}</Text>
-                      <Text style={[styles.milestoneDate, { color: colors.mutedForeground }]}>{m.date}</Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-
-              <View style={styles.txRow}>
-                <Feather name="link-2" size={12} color="#67E8F9" />
-                <Text style={styles.txText}>Immutable Record: {item.txId}</Text>
-              </View>
-            </View>
-          ))
+          <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Feather name="shield" size={28} color="#67E8F9" style={{ alignSelf: 'center', marginBottom: 10 }} />
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>No Donation Records Yet</Text>
+            <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
+              Once you complete your first blood donation at an accredited centre, your full chain-of-custody journey and cryptographic proof will show up here.
+            </Text>
+          </View>
         )}
 
         <View style={styles.trustNote}>
@@ -179,13 +122,11 @@ const styles = StyleSheet.create({
   badge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, backgroundColor: 'rgba(52, 211, 153, 0.12)' },
   badgeText: { fontSize: 9, fontWeight: '800', color: '#34D399', letterSpacing: 0.5 },
   timeline: { paddingLeft: 8, borderLeftWidth: 1, borderLeftColor: '#1E293B', marginLeft: 6, gap: 10, marginVertical: 4 },
-  milestoneRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  timelineDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#34D399', marginTop: 4, marginLeft: -11 },
-  milestoneContent: { flex: 1 },
-  milestoneLabel: { fontSize: 12, fontWeight: '600' },
-  milestoneDate: { fontSize: 10, marginTop: 2 },
   txRow: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(15, 23, 42, 0.6)', padding: 8, borderRadius: 8 },
   txText: { color: '#94A3B8', fontSize: 10, fontFamily: 'monospace' },
   trustNote: { flexDirection: 'row', gap: 10, padding: 14, backgroundColor: 'rgba(56, 189, 248, 0.08)', borderRadius: 12, marginTop: 8 },
   trustText: { flex: 1, fontSize: 11, lineHeight: 16 },
+  emptyCard: { marginTop: 12, padding: 24, borderRadius: 14, borderWidth: 1, alignItems: 'center', textAlign: 'center' },
+  emptyTitle: { fontSize: 15, fontWeight: '700', marginBottom: 6 },
+  emptyDesc: { fontSize: 12, lineHeight: 18, textAlign: 'center' },
 });

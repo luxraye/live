@@ -131,12 +131,6 @@ export default function SignUpScreen() {
                 <Pressable disabled={!email || !password || isSubmitting} onPress={submit} style={[styles.button, (!email || !password || isSubmitting) && styles.disabled]}>
                   <Text style={styles.buttonText}>{isSubmitting ? 'Creating account…' : 'Create account'}</Text>
                 </Pressable>
-                <Pressable
-                  onPress={() => router.replace('/(tabs)')}
-                  style={styles.demoButton}
-                >
-                  <Text style={styles.demoButtonText}>⚡ EXPLORE DONOR PILOT DEMO</Text>
-                </Pressable>
 
                 {isSubmitting && (
                   <>
@@ -181,8 +175,6 @@ const styles = StyleSheet.create({
   button: { height: 52, borderRadius: 11, backgroundColor: '#DC2626', alignItems: 'center', justifyContent: 'center', marginTop: 24 },
   disabled: { opacity: 0.45 },
   buttonText: { color: '#fff', fontSize: 14, fontWeight: '800' },
-  demoButton: { height: 48, borderRadius: 11, backgroundColor: 'rgba(56, 189, 248, 0.12)', borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.4)', alignItems: 'center', justifyContent: 'center', marginTop: 10 },
-  demoButtonText: { color: '#38BDF8', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
   ecoBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, backgroundColor: 'rgba(56, 189, 248, 0.1)', borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.3)' },
   ecoBadgeText: { color: '#38BDF8', fontSize: 10, fontWeight: '700' },
   footer: { textAlign: 'center', fontSize: 12, marginTop: 24 },

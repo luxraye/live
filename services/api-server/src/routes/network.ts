@@ -1,6 +1,6 @@
 import { Router, type IRouter } from 'express';
 import { requireUser } from '../lib/auth';
-import { pool, MOCK_REQUESTS } from '@workspace/db';
+import { pool } from '@workspace/db';
 const router: IRouter = Router();
 router.get('/requests', async (req, res) => {
   if (!requireUser(req, res)) return;
@@ -16,7 +16,7 @@ router.get('/requests', async (req, res) => {
     const result = await pool.query(query, params);
     return res.json(result.rows);
   } catch {
-    return res.json(MOCK_REQUESTS);
+    return res.json([]);
   }
 });
 router.post('/requests/:id/respond', async (req, res) => {

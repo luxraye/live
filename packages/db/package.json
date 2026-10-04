@@ -10,7 +10,8 @@
   "scripts": {
     "migrate": "tsx src/migrate.ts",
     "push": "drizzle-kit push --config ./drizzle.config.ts",
-    "push-force": "drizzle-kit push --force --config ./drizzle.config.ts"
+    "push-force": "drizzle-kit push --force --config ./drizzle.config.ts",
+    "purge": "tsx src/purge.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.3",

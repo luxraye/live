@@ -141,13 +141,16 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .icon-btn { width: 32px; height: 32px; padding: 0; }
 .grid { display: grid; gap: 14px; }
 .kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.kpi { background: #101821; border: 1px solid #263441; padding: 17px 18px; min-height: 114px; position: relative; overflow: hidden; }
-.kpi:after { content: ''; width: 60px; height: 60px; position: absolute; right: -26px; bottom: -26px; border: 1px solid #27d7e820; transform: rotate(45deg); }
+.kpi { background: #101821; border: 1px solid #263441; padding: 17px 18px; min-height: 124px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; }
+.kpi:after { content: ''; width: 60px; height: 60px; position: absolute; right: -26px; bottom: -26px; border: 1px solid #27d7e820; transform: rotate(45deg); pointer-events: none; }
 .kpi-label { color: #718697; font: 10px var(--app-font-mono); letter-spacing: .11em; text-transform: uppercase; }
-.kpi-value { color: #edf6f7; font: 700 31px var(--app-font-mono); letter-spacing: -.08em; margin: 13px 0 8px; }
+.kpi-value { color: #edf6f7; font: 700 28px/1.2 var(--app-font-mono); letter-spacing: -.06em; margin: 8px 0; min-height: 36px; display: flex; align-items: center; }
 .kpi-meta { color: #56dca8; font-size: 10px; }
 .kpi-meta.warn { color: #e7b85b; }
 .kpi-meta.critical { color: #f37584; }
+.empty-panel-notice { display: flex; align-items: flex-start; gap: 14px; padding: 18px; background: rgba(14, 22, 33, 0.6); border: 1px dashed #263441; border-radius: 4px; }
+.empty-panel-notice strong { display: block; font-size: 13px; color: #d9e6ec; margin-bottom: 4px; }
+.empty-panel-notice p { margin: 0; font-size: 11px; color: #7b8e9e; line-height: 1.5; }
 .split-grid { grid-template-columns: minmax(0, 1.52fr) minmax(310px, 1fr); margin-top: 14px; }
 .panel { background: #101821; border: 1px solid #263441; min-width: 0; }
 .panel-head { padding: 16px 18px; border-bottom: 1px solid #263441; display: flex; align-items: center; justify-content: space-between; gap: 12px; }

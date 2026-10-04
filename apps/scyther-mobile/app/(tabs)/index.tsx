@@ -17,17 +17,6 @@ import { useDonorProfile, useDonorDonations } from '@/hooks/useDonorProfile';
 import { useDonationRequests } from '@/hooks/useNetwork';
 import { useCentres } from '@/hooks/useCentres';
 
-const fallbackCenters = [
-  { name: 'Princess Marina Hospital', distance: '2.4 km', status: 'Open until 18:00', icon: 'heart' as const },
-  { name: 'Gaborone Private Hospital', distance: '5.8 km', status: 'Open until 17:00', icon: 'plus' as const },
-  { name: 'Block 8 Clinic', distance: '8.1 km', status: 'Closed · opens 08:00', icon: 'home' as const },
-];
-
-const fallbackRequests = [
-  { type: 'O-', title: 'ICU Ward 3 · PMH Gaborone', detail: 'Trauma patient requires urgent transfusion', time: '2h ago', distance: '2.4 km', critical: true },
-  { type: 'O-', title: 'Mahalapye District Hospital', detail: 'Surgical support needed this week', time: '5h ago', distance: '42 km', critical: false },
-];
-
 function SectionTitle({ children, action, onPress }: { children: string; action?: string; onPress?: () => void }) {
   const colors = useColors();
   return (
@@ -191,38 +180,63 @@ export default function HomeScreen() {
           <View style={styles.mapLabel}><Feather name="navigation" size={12} color="#67E8F9" /><Text style={styles.mapLabelText}>{liveCentres?.length ? `${liveCentres.length} CENTRES IN NETWORK` : '3 CENTRES WITHIN 10 KM'}</Text></View>
         </Pressable>
         <View style={styles.centerList}>
-          {(liveCentres && liveCentres.length > 0 ? liveCentres.slice(0, 2).map((c) => ({
-            name: c.name,
-            distance: c.distance_km ? `${c.distance_km.toFixed(1)} km` : (c.district || 'Nearby'),
-            status: c.is_open ? 'Open' : 'Closed',
-            icon: 'heart' as const,
-          })) : fallbackCenters.slice(0, 2)).map((center) => (
-            <Pressable key={center.name} style={styles.centerRow} onPress={() => router.push('/centres')}>
-              <View style={[styles.centerIcon, { backgroundColor: '#2D0808' }]}><Feather name={center.icon} size={16} color="#EF4444" /></View>
-              <View style={styles.centerInfo}><Text style={[styles.centerName, { color: colors.text }]}>{center.name}</Text><Text style={[styles.centerMeta, { color: colors.mutedForeground }]}>{center.distance} · <Text style={{ color: '#34D399' }}>{center.status}</Text></Text></View>
-              <Feather name="arrow-up-right" size={16} color={colors.mutedForeground} />
-            </Pressable>
-          ))}
+          {liveCentres && liveCentres.length > 0 ? (
+            liveCentres.slice(0, 3).map((center) => (
+              <Pressable key={center.id} style={styles.centerRow} onPress={() => router.push('/centres')}>
+                <View style={[styles.centerIcon, { backgroundColor: '#2D0808' }]}><Feather name="heart" size={16} color="#EF4444" /></View>
+                <View style={styles.centerInfo}>
+                  <Text style={[styles.centerName, { color: colors.text }]}>{center.name}</Text>
+                  <Text style={[styles.centerMeta, { color: colors.mutedForeground }]}>
+                    {center.district || 'Botswana'} · <Text style={{ color: center.is_open ? '#34D399' : '#EF4444' }}>{center.is_open ? 'Open' : 'Closed'}</Text>
+                  </Text>
+                </View>
+                <Feather name="arrow-up-right" size={16} color={colors.mutedForeground} />
+              </Pressable>
+            ))
+          ) : (
+            <View style={[styles.emptyInline, { borderColor: colors.border, backgroundColor: colors.card }]}>
+              <Text style={[styles.emptyInlineText, { color: colors.mutedForeground }]}>
+                No centres registered yet. Once donation facilities are added, nearby locations will show up here.
+              </Text>
+            </View>
+          )}
         </View>
 
         <SectionTitle action="See all" onPress={() => router.push('/network')}>ACTIVE IN YOUR AREA</SectionTitle>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.requestScroll}>
-          {(liveRequests && liveRequests.length > 0 ? liveRequests.map((r) => ({
-            type: r.blood_type,
-            title: r.facility_name,
-            detail: r.description,
-            time: r.created_at ? new Date(r.created_at).toLocaleDateString() : 'Active',
-            distance: r.district || 'Local',
-            critical: r.priority === 'critical',
-          })) : fallbackRequests).map((request, i) => (
-            <Pressable key={i} style={[styles.requestCard, { backgroundColor: colors.card, borderColor: request.critical ? '#7F1D1D' : colors.border }]} onPress={() => router.push('/network')}>
-              <View style={styles.requestTop}><View style={[styles.criticalDot, { backgroundColor: request.critical ? '#EF4444' : '#F59E0B' }]} /><Text style={[styles.requestStatus, { color: request.critical ? '#FCA5A5' : '#FCD34D' }]}>{request.critical ? 'CRITICAL' : 'PLANNED'}</Text><Text style={[styles.requestTime, { color: colors.mutedForeground }]}>{request.time}</Text></View>
-              <View style={styles.requestType}><Text style={[styles.requestTypeLabel, { color: colors.mutedForeground }]}>BLOOD TYPE NEEDED</Text><Text style={[styles.requestBlood, { color: '#34D399' }]}>{request.type}</Text></View>
-              <Text style={[styles.requestTitle, { color: colors.text }]}>{request.title}</Text><Text style={[styles.requestDetail, { color: colors.mutedForeground }]}>{request.detail}</Text>
-              <View style={styles.requestBottom}><Text style={[styles.requestDistance, { color: colors.mutedForeground }]}><Feather name="map-pin" size={11} /> {request.distance}</Text><Text style={[styles.respondText, { color: colors.tint }]}>{request.critical ? 'Respond' : 'View'}</Text></View>
-            </Pressable>
-          ))}
-        </ScrollView>
+        {liveRequests && liveRequests.length > 0 ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.requestScroll}>
+            {liveRequests.map((request) => (
+              <Pressable key={request.id} style={[styles.requestCard, { backgroundColor: colors.card, borderColor: request.priority === 'critical' ? '#7F1D1D' : colors.border }]} onPress={() => router.push('/network')}>
+                <View style={styles.requestTop}>
+                  <View style={[styles.criticalDot, { backgroundColor: request.priority === 'critical' ? '#EF4444' : '#F59E0B' }]} />
+                  <Text style={[styles.requestStatus, { color: request.priority === 'critical' ? '#FCA5A5' : '#FCD34D' }]}>
+                    {request.priority === 'critical' ? 'CRITICAL' : 'PLANNED'}
+                  </Text>
+                  <Text style={[styles.requestTime, { color: colors.mutedForeground }]}>
+                    {request.created_at ? new Date(request.created_at).toLocaleDateString() : 'Active'}
+                  </Text>
+                </View>
+                <View style={styles.requestType}>
+                  <Text style={[styles.requestTypeLabel, { color: colors.mutedForeground }]}>BLOOD TYPE NEEDED</Text>
+                  <Text style={[styles.requestBlood, { color: '#34D399' }]}>{request.blood_type}</Text>
+                </View>
+                <Text style={[styles.requestTitle, { color: colors.text }]}>{request.facility_name}</Text>
+                <Text style={[styles.requestDetail, { color: colors.mutedForeground }]}>{request.description}</Text>
+                <View style={styles.requestBottom}>
+                  <Text style={[styles.requestDistance, { color: colors.mutedForeground }]}><Feather name="map-pin" size={11} /> {request.district || 'Local'}</Text>
+                  <Text style={[styles.respondText, { color: colors.tint }]}>{request.priority === 'critical' ? 'Respond' : 'View'}</Text>
+                </View>
+              </Pressable>
+            ))}
+          </ScrollView>
+        ) : (
+          <View style={[styles.emptyInline, { borderColor: colors.border, backgroundColor: colors.card, marginHorizontal: 16 }]}>
+            <Feather name="check-circle" size={18} color="#34D399" />
+            <Text style={[styles.emptyInlineText, { color: colors.mutedForeground, flex: 1 }]}>
+              No critical shortages in your area. Once hospital requests are broadcast, they will show up here.
+            </Text>
+          </View>
+        )}
 
         <SectionTitle action="Explore" onPress={() => router.push('/health')}>FROM THE HEALTH HUB</SectionTitle>
         <Pressable style={[styles.article, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => router.push('/health')}>
@@ -293,4 +307,6 @@ const styles = StyleSheet.create({
   saveText: { flex: 1, fontSize: 12, fontWeight: '600', lineHeight: 17 },
   feedbackPrompt: { borderWidth: 1, borderRadius: 12, minHeight: 48, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, gap: 10, marginTop: 4 },
   feedbackText: { flex: 1, fontSize: 12, fontWeight: '600', lineHeight: 16 },
+  emptyInline: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 12, borderWidth: 1, marginTop: 4 },
+  emptyInlineText: { fontSize: 12, lineHeight: 17 },
 });
