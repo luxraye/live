@@ -38,9 +38,9 @@ export function useDonorProfile() {
     queryFn: async () => {
       try {
         const res = await apiFetch<DonorProfile | null>('/donor/me');
-        return res ?? DEMO_DONOR_PROFILE;
+        return res ?? null;
       } catch {
-        return DEMO_DONOR_PROFILE;
+        return null;
       }
     },
     staleTime: 5 * 60 * 1000,

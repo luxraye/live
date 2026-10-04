@@ -99,7 +99,7 @@ export default function FeedbackScreen() {
             <Text style={[styles.eyebrow, { color: colors.mutedForeground }]}>USER TESTING · BLOODCHAIN</Text>
             <Text style={[styles.title, { color: colors.text }]}>Quick feedback.</Text>
           </View>
-          <Pressable onPress={() => router.back()} style={[styles.back, { borderColor: colors.border, backgroundColor: colors.card }]}>
+          <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))} style={[styles.back, { borderColor: colors.border, backgroundColor: colors.card }]}>
             <Feather name="x" size={19} color={colors.text} />
           </Pressable>
         </View>

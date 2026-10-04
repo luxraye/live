@@ -33,7 +33,7 @@ export default function SignUpScreen() {
     await signUp.finalize({
       navigate: ({ session }) => {
         if (session?.currentTask) return;
-        router.replace('/(onboarding)' as never);
+        router.replace('/onboarding' as never);
       },
     });
   };

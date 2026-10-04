@@ -21,35 +21,47 @@ SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
-  import { isValidClerkKey, sanitizeClerkKey } from '@/hooks/clerk-utils';
+import { useRouter, useSegments } from 'expo-router';
+import { isValidClerkKey, sanitizeClerkKey } from '@/hooks/clerk-utils';
 
-function RootLayoutNav({ hasClerk }: { hasClerk: boolean }) {
+function RootNavAuthenticated() {
+  const { isSignedIn, isLoaded } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    const inAuthGroup = segments[0] === '(auth)';
+    if (!isSignedIn && !inAuthGroup) {
+      router.replace('/(auth)/sign-in');
+    } else if (isSignedIn && inAuthGroup) {
+      router.replace('/(tabs)');
+    }
+  }, [isLoaded, isSignedIn, segments]);
+
   return (
     <Stack screenOptions={{ headerBackTitle: 'Back', headerShown: false }}>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
-      <Stack.Screen name="(feedback)" options={{ headerShown: false, presentation: 'modal' }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+      <Stack.Screen name="feedback" options={{ headerShown: false, presentation: 'modal' }} />
       <Stack.Screen name="alerts" options={{ headerShown: false }} />
       <Stack.Screen name="verification" options={{ headerShown: false, presentation: 'modal' }} />
     </Stack>
   );
 }
 
-class SafeClerkWrapper extends React.Component<{ children: React.ReactNode; fallback: React.ReactNode }, { hasError: boolean }> {
-  state = { hasError: false };
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-  componentDidCatch(err: any) {
-    console.warn('[Scyther] Clerk initialization bypassed:', err?.message || err);
-  }
-  render() {
-    if (this.state.hasError) {
-      return this.props.fallback;
-    }
-    return this.props.children;
-  }
+function RootNavUnauthenticated() {
+  return (
+    <Stack screenOptions={{ headerBackTitle: 'Back', headerShown: false }}>
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+      <Stack.Screen name="feedback" options={{ headerShown: false, presentation: 'modal' }} />
+      <Stack.Screen name="alerts" options={{ headerShown: false }} />
+      <Stack.Screen name="verification" options={{ headerShown: false, presentation: 'modal' }} />
+    </Stack>
+  );
 }
 
 export default function RootLayout() {
@@ -73,50 +85,39 @@ export default function RootLayout() {
     process.env.VITE_CLERK_PUBLISHABLE_KEY ||
     process.env.CLERK_PUBLISHABLE_KEY;
   const publishableKey = sanitizeClerkKey(rawKey);
-  const hasClerkKey = Boolean(publishableKey);
+  const hasClerk = Boolean(publishableKey);
 
-  // Check if running on web with a production Clerk key on an unmapped domain (e.g. *.onrender.com)
-  const isWeb = typeof window !== 'undefined';
-  const isProductionKey = publishableKey?.startsWith('pk_live_');
-  const isDomainAllowed =
-    !isWeb ||
-    !isProductionKey ||
-    window.location.hostname === 'bloodchain.life' ||
-    window.location.hostname.endsWith('.bloodchain.life');
-
-  const enableClerk = hasClerkKey && isDomainAllowed;
-
-  if (isWeb && isProductionKey && !isDomainAllowed) {
-    console.info(
-      `[Scyther] Clerk production keys require domain "bloodchain.life". Current host is "${window.location.hostname}". Running in sovereign demo mode without Clerk block.`,
+  if (hasClerk) {
+    return (
+      <ClerkProvider publishableKey={publishableKey!} tokenCache={tokenCache}>
+        <ClerkLoaded>
+          <SafeAreaProvider>
+            <ErrorBoundary>
+              <QueryClientProvider client={queryClient}>
+                <GestureHandlerRootView>
+                  <KeyboardProvider>
+                    <RootNavAuthenticated />
+                  </KeyboardProvider>
+                </GestureHandlerRootView>
+              </QueryClientProvider>
+            </ErrorBoundary>
+          </SafeAreaProvider>
+        </ClerkLoaded>
+      </ClerkProvider>
     );
   }
 
-  const inner = (
+  return (
     <SafeAreaProvider>
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <GestureHandlerRootView>
             <KeyboardProvider>
-              <RootLayoutNav hasClerk={enableClerk} />
+              <RootNavUnauthenticated />
             </KeyboardProvider>
           </GestureHandlerRootView>
         </QueryClientProvider>
       </ErrorBoundary>
     </SafeAreaProvider>
   );
-
-  if (enableClerk) {
-    return (
-      <SafeClerkWrapper fallback={inner}>
-        <ClerkProvider publishableKey={publishableKey!} tokenCache={tokenCache}>
-          <ClerkLoaded>
-            {inner}
-          </ClerkLoaded>
-        </ClerkProvider>
-      </SafeClerkWrapper>
-    );
-  }
-
-  return inner;
 }

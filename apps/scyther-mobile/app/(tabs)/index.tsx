@@ -254,7 +254,7 @@ export default function HomeScreen() {
         {/* Investor validation & User feedback prompt */}
         <Pressable
           style={[styles.feedbackPrompt, { borderColor: colors.border, backgroundColor: colors.card }]}
-          onPress={() => router.push('/(feedback)' as never)}
+          onPress={() => router.push('/feedback' as never)}
         >
           <Feather name="message-square" size={16} color="#67E8F9" />
           <Text style={[styles.feedbackText, { color: colors.text }]}>User Testing: Share your feedback on Scyther</Text>
